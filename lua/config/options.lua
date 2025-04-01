@@ -39,3 +39,5 @@ vim.opt.expandtab = true
 vim.opt.guifont = "FiraCode Nerd Font:h14"  -- Adjust the font size as needed
 
 vim.g.colorscheme = "kanagawa-dragon"
+
+vim.opt.termguicolors = true

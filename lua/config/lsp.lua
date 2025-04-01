@@ -29,13 +29,22 @@ lspconfig.rust_analyzer.setup({
 -- Configure C/C++ LSP (clangd) - ensure clangd is installed.
 lspconfig.clangd.setup({})
 
--- Show documentation when you hover the cursor:
--- Automatically show a floating window with LSP hover info after the cursor is held still.
-vim.o.updatetime = 100  -- update time in milliseconds
-vim.cmd([[
-  augroup LspHover
-    autocmd!
-    " When the cursor stays idle, call LSP hover function
-    autocmd CursorHold * lua vim.lsp.buf.hover()
-  augroup END
-]])
+local function conditional_hover()
+  local params = vim.lsp.util.make_position_params()
+  vim.lsp.buf_request(0, "textDocument/hover", params, function(err, result, ctx, config)
+    if err or not (result and result.contents) then
+      return
+    end
+    local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
+    markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
+    if vim.tbl_isempty(markdown_lines) then
+      return
+    end
+    local opts = { focusable = true, border = "rounded" }
+    vim.lsp.util.open_floating_preview(markdown_lines, "markdown", opts)
+  end)
+end
+
+vim.api.nvim_create_autocmd("CursorHold", {
+  callback = conditional_hover,
+})

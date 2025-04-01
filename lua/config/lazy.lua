@@ -17,8 +17,7 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
   spec = {
-    -- Import LazyVim plugins
-    { "LazyVim/LazyVim", import = "lazyvim.plugins" },
+    
     -- Import/override with your custom plugins
     { import = "plugins" },
 
@@ -28,12 +27,16 @@ require("lazy").setup({
       lazy = false,  -- Load immediately
       priority = 1000,  -- High priority to load first
       config = function()
-        vim.cmd("colorscheme kanagawa-dragon") -- Force apply the colorscheme        
+        -- vim.cmd("colorscheme kanagawa-dragon") -- Force apply the colorscheme        
       end
     },
-    
-    
 
+    -- Add nvim-lspconfig explicitly
+    {
+      "neovim/nvim-lspconfig",
+      lazy = false, -- Load immediately if you want
+    },
+    
     -- Add the nvim-tree file explorer plugin (always load)
     { "nvim-tree/nvim-tree.lua", lazy = false, priority = 1000 },
 
@@ -43,10 +46,154 @@ require("lazy").setup({
     -- Add Telescope for find functionality (you can lazy-load if preferred)
     { "nvim-telescope/telescope.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
 
-    -- Add oldworld.nvim plugin
-    -- { "dgox16/oldworld.nvim", lazy = true },
+    {
+      "folke/noice.nvim",
+      dependencies = { "MunifTanjim/nui.nvim" },
+      config = function()
+        require("noice").setup({
+          lsp = {
+            override = {
+              ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+              ["vim.lsp.util.stylize_markdown"] = true,
+              ["cmp.entry.get_documentation"] = true,
+            },
+          },
+          presets = {
+            command_palette = true,       -- Enable a command palette-style UI
+            long_message_to_split = true,   -- Split long messages into a separate window
+            lsp_doc_border = true,          -- Add borders to LSP documentation popups
+          },
+        })
+      end,
+    },
+
+    {
+      'shaunsingh/nord.nvim',
+      lazy = false,
+      priority = 1000,
+      config = function ()
+          vim.cmd('colorscheme nord')
+      end
+    },
+
+    {
+      'AlexvZyl/nordic.nvim',
+      lazy = false,
+      priority = 1000,
+      config = function()
+        require('nordic').setup({
+          -- This callback can be used to override the colors used in the base palette.
+          on_palette = function(palette) end,
+          -- This callback can be used to override the colors used in the extended palette.
+          after_palette = function(palette) end,
+          -- This callback can be used to override highlights before they are applied.
+          on_highlight = function(highlights, palette) end,
+          -- Enable bold keywords.
+          bold_keywords = false,
+          -- Enable italic comments.
+          italic_comments = true,
+          -- Enable editor background transparency.
+          transparent = {
+              -- Enable transparent background.
+              bg = true,
+              -- Enable transparent background for floating windows.
+              float = true,
+          },
+          -- Enable brighter float border.
+          bright_border = false,
+          -- Reduce the overall amount of blue in the theme (diverges from base Nord).
+          reduced_blue = true,
+          -- Swap the dark background with the normal one.
+          swap_backgrounds = false,
+          -- Cursorline options.  Also includes visual/selection.
+          cursorline = {
+              -- Bold font in cursorline.
+              bold = false,
+              -- Bold cursorline number.
+              bold_number = true,
+              -- Available styles: 'dark', 'light'.
+              theme = 'dark',
+              -- Blending the cursorline bg with the buffer bg.
+              blend = 0.85,
+          },
+          noice = {
+              -- Available styles: `classic`, `flat`.
+              style = 'classic',
+          },
+          telescope = {
+              -- Available styles: `classic`, `flat`.
+              style = 'flat',
+          },
+          leap = {
+              -- Dims the backdrop when using leap.
+              dim_backdrop = true,
+          },
+          ts_context = {
+              -- Enables dark background for treesitter-context window
+              dark_background = true,
+          }
+      })
+        vim.cmd.colorscheme('nordic')
+      end
+    },
+
+    {
+      'sainnhe/sonokai',
+      lazy = false,
+      priority = 1000,
+      config = function()
+        -- Optionally configure and load the colorscheme
+        -- directly inside the plugin declaration.
+        vim.g.sonokai_enable_italic = true
+        vim.cmd.colorscheme('sonokai')
+      end
+    },
+
+    {
+      'sainnhe/everforest',
+      lazy = false,
+      priority = 1000,
+      config = function()
+        -- Optionally configure and load the colorscheme
+        -- directly inside the plugin declaration.
+        vim.g.everforest_enable_italic = true
+        vim.cmd.colorscheme('everforest')
+      end
+    },
+
+    {
+      "nvim-lualine/lualine.nvim",
+      dependencies = { "nvim-tree/nvim-web-devicons" },
+      lazy = false,
+      priority = 1000,
+      config = function()
+        require("lualine").setup {
+          options = {
+            theme = "nord",   -- or another theme you like
+            section_separators = { left = "", right = "" },
+            component_separators = { left = "", right = "" },
+          },
+          sections = {
+            lualine_a = { "mode" },                      -- Current mode: Normal, Insert, etc.
+            lualine_b = { "branch", "diff", "diagnostics" },
+            lualine_c = { "filename" },
+            lualine_x = { "encoding", "fileformat", "filetype" },
+            lualine_y = { "progress" },
+            lualine_z = { "location" },                  -- Shows row and column
+          },
+          inactive_sections = {
+            lualine_a = {},
+            lualine_b = {},
+            lualine_c = { "filename" },
+            lualine_x = { "location" },
+            lualine_y = {},
+            lualine_z = {}
+          },
+        }
+      end,
+    },    
   },
-  install = { colorscheme = { "tokyonight", "habamax", "rose-pine", "kanagawa" } },
+  install = { colorscheme = { "tokyonight", "habamax", "rose-pine", "kanagawa", "poimandres", "sonokai"} },
   checker = { enabled = true, notify = false },
   performance = {
     rtp = {
@@ -61,7 +208,6 @@ require("lazy").setup({
   },
 })
 
-
-vim.defer_fn(function()
-  vim.cmd("colorscheme kanagawa-dragon")
-end, 0)
+-- vim.defer_fn(function()
+--   vim.cmd("colorscheme habamax")
+-- end, 0)

@@ -18,7 +18,6 @@ require("config.lsp")
 -- Load file explorer configuration
 require("config.nvimtree")
 
--- (Optional) Load additional plugins from lua/plugins/init.lua if needed
--- require("plugins.init")
-
 require("config.devicons")
+
+require("config.colorscheme")   -- loads the colorscheme persistence snippet
