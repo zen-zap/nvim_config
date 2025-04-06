@@ -46,3 +46,12 @@ vim.api.nvim_set_keymap("t", "<C-S-c>", "<C-\\><C-n>:lua kill_terminal_job()<CR>
 -- OPTIONAL: Map K in normal mode to show documentation on hover
 -- This will call the LSP hover function.
 vim.api.nvim_set_keymap("n", "K", ":lua vim.lsp.buf.hover()<CR>", opts)
+
+-- Map Ctrl+Shift+Up to start Visual Block mode and select upwards
+vim.api.nvim_set_keymap('n', '<C-S-Up>', '<C-v>k', { noremap = true, silent = true })
+
+-- Map Ctrl+Shift+Down to start Visual Block mode and select downwards
+vim.api.nvim_set_keymap('n', '<C-S-Down>', '<C-v>j', { noremap = true, silent = true })
+
+-- type viw to select the current word
+vim.api.nvim_set_keymap('n', '<Leader>e', 'viw', { noremap = true, silent = true })

@@ -36,6 +36,130 @@ require("lazy").setup({
       "neovim/nvim-lspconfig",
       lazy = false, -- Load immediately if you want
     },
+
+    -- LSP-based code-completion
+	{
+		"hrsh7th/nvim-cmp",
+		-- load cmp on InsertEnter
+		event = "InsertEnter",
+		-- these dependencies will only be loaded when cmp loads
+		-- dependencies are always lazy-loaded unless specified otherwise
+		dependencies = {
+			'neovim/nvim-lspconfig',
+			"hrsh7th/cmp-nvim-lsp",
+			"hrsh7th/cmp-buffer",
+			"hrsh7th/cmp-path",
+		},
+		config = function()
+			local cmp = require'cmp'
+			cmp.setup({
+				snippet = {
+					-- REQUIRED by nvim-cmp. get rid of it once we can
+					expand = function(args)
+						vim.fn["vsnip#anonymous"](args.body)
+					end,
+				},
+				mapping = cmp.mapping.preset.insert({
+					['<C-b>'] = cmp.mapping.scroll_docs(-4),
+					['<C-f>'] = cmp.mapping.scroll_docs(4),
+					['<C-Space>'] = cmp.mapping.complete(),
+					['<C-e>'] = cmp.mapping.abort(),
+					-- Accept currently selected item.
+					-- Set `select` to `false` to only confirm explicitly selected items.
+					['<CR>'] = cmp.mapping.confirm({ select = true }),
+				}),
+				sources = cmp.config.sources({
+					{ name = 'nvim_lsp' },
+				}, {
+					{ name = 'path' },
+				}),
+				experimental = {
+					ghost_text = true,
+				},
+			})
+
+			-- Enable completing paths in :
+			cmp.setup.cmdline(':', {
+				sources = cmp.config.sources({
+					{ name = 'path' }
+				})
+			})
+		end
+	},
+
+
+    {
+      "lukas-reineke/indent-blankline.nvim",
+      main = "ibl",
+      ---@module "ibl"
+      ---@type ibl.config
+      opts = {},
+    },
+
+    -- quick navigation
+    {
+      'ggandor/leap.nvim',
+      config = function()
+        require('leap').create_default_mappings()
+      end
+    },
+  	-- Enhanced % matching for pairs
+    {
+      'andymass/vim-matchup',
+      config = function()
+        vim.g.matchup_matchparen_offscreen = { method = "popup" }
+      end
+    },
+    
+    -- to see git changes
+    {
+      "lewis6991/gitsigns.nvim",
+      config = function()
+        require("gitsigns").setup()
+      end,
+    },
+
+    {
+      "folke/which-key.nvim",
+      config = function()
+        require("which-key").setup {}
+      end,
+    },
+    
+    {
+      "karb94/neoscroll.nvim",
+      config = function()
+        require("neoscroll").setup {
+          easing_function = "quadratic",
+          hide_cursor = true,
+          stop_eof = true,
+        }
+      end,
+    },
+    
+    {
+      "RRethy/vim-illuminate",
+      config = function()
+        require("illuminate").configure {
+          providers = { "lsp", "regex", "treesitter" },
+          delay = 120,
+          filetypes_denylist = { "dirvish", "fugitive", "NvimTree" },
+        }
+      end,
+    },
+    
+	-- Auto pairs for brackets and quotes
+    {
+      "windwp/nvim-autopairs",
+      event = "InsertEnter",
+      config = function()
+        require("nvim-autopairs").setup({
+          enable_check_bracket_line = true,  -- Check for existing bracket in the same line
+          disable_filetype = { "TelescopePrompt" },  -- Disable in specific filetypes
+        })        
+      end,
+    },
+
     
     -- Add the nvim-tree file explorer plugin (always load)
     { "nvim-tree/nvim-tree.lua", lazy = false, priority = 1000 },
@@ -65,15 +189,6 @@ require("lazy").setup({
           },
         })
       end,
-    },
-
-    {
-      'shaunsingh/nord.nvim',
-      lazy = false,
-      priority = 1000,
-      config = function ()
-          vim.cmd('colorscheme nord')
-      end
     },
 
     {
@@ -114,7 +229,7 @@ require("lazy").setup({
               -- Available styles: 'dark', 'light'.
               theme = 'dark',
               -- Blending the cursorline bg with the buffer bg.
-              blend = 0.85,
+              blend = 0.80,
           },
           noice = {
               -- Available styles: `classic`, `flat`.
@@ -160,6 +275,28 @@ require("lazy").setup({
         vim.cmd.colorscheme('everforest')
       end
     },
+
+	-- -- toml
+	-- 'cespare/vim-toml',
+	-- -- yaml
+	-- {
+	-- 	"cuducos/yaml.nvim",
+	-- 	ft = { "yaml" },
+	-- 	dependencies = {
+	-- 		"nvim-treesitter/nvim-treesitter",
+	-- 	},
+	-- },
+	-- -- rust
+	-- {
+	-- 	'rust-lang/rust.vim',
+	-- 	ft = { "rust" },
+	-- 	config = function()
+	-- 		vim.g.rustfmt_autosave = 1
+	-- 		vim.g.rustfmt_emit_files = 1
+	-- 		vim.g.rustfmt_fail_silently = 0
+	-- 		vim.g.rust_clip_command = 'wl-copy'
+	-- 	end
+	-- },
 
     {
       "nvim-lualine/lualine.nvim",

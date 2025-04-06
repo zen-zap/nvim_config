@@ -12,19 +12,77 @@ lspconfig.jdtls.setup({
   root_dir = lspconfig.util.root_pattern("gradlew", "mvnw", ".git"),
 })
 
--- Configure Rust LSP (rust-analyzer) - make sure rust-analyzer is installed.
+-- Ensure the lspconfig module is required
+local lspconfig = require('lspconfig')
+
+-- Configure rust-analyzer
 lspconfig.rust_analyzer.setup({
   settings = {
     ["rust-analyzer"] = {
+      -- Enable clippy diagnostics on save
       checkOnSave = {
-        command = "clippy",  -- use clippy for linting
+        command = "clippy",
+      },
+      -- Enable inlay hints
+      inlayHints = {
+        enable = true,
+        typeHints = true,
+        chainingHints = true,
+      },
+      -- Enable automatic formatting
+      rustfmt = {
+        enableRangeFormatting = true,
+        extraArgs = { "--edition=2021" },
+      },
+      cargo = {
+        allFeatures = true,
+      },
+      imports = {
+        group = {
+          enable = false,
+        },
+      },
+      completion = {
+        postfix = {
+          enable = false,
+        },
       },
     },
   },
   on_attach = function(client, bufnr)
+    -- Key mappings for Rust LSP features
+    local buf_map = function(mode, lhs, rhs, opts)
+      opts = opts or { noremap = true, silent = true }
+      vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
+    end
+
+    -- Example mappings:
+    buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")        -- Go to definition
+    buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")              -- Hover documentation
+    buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>") -- Code actions
+    buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")    -- Rename symbol
+
+    if type(vim.lsp.buf.inlay_hint) == "function" then
+      vim.api.nvim_create_autocmd("InsertLeave", {
+        buffer = bufnr,
+        callback = function()
+          vim.lsp.buf.inlay_hint(bufnr, true)
+        end,
+      })
+      vim.api.nvim_create_autocmd("InsertEnter", {
+        buffer = bufnr,
+        callback = function()
+          vim.lsp.buf.inlay_hint(bufnr, false)
+        end,
+      })
+    else
+      print("Inlay hints--none")
+    end
+    -- Print a messagee when Rust LSP attaches
     print("Rust LSP attached!")
   end,
 })
+
 
 -- Configure C/C++ LSP (clangd) - ensure clangd is installed.
 lspconfig.clangd.setup({})
