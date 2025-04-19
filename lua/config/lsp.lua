@@ -19,33 +19,54 @@ local lspconfig = require('lspconfig')
 lspconfig.rust_analyzer.setup({
   settings = {
     ["rust-analyzer"] = {
-      -- Enable clippy diagnostics on save
+      -- can Enable clippy diagnostics on save
       checkOnSave = {
-        command = "clippy",
+        enable = false,
       },
+      cachePriming = { enable = true },
       -- Enable inlay hints
       inlayHints = {
         enable = true,
         typeHints = true,
         chainingHints = true,
+        parameterHints = true, -- Show parameter hints
+        maxLength = 30, -- Limit the length of inlay hints
+      },
+      -- Enable proc macro support
+      -- This is necessary for procedural macros to work correctly
+      -- in Rust projects using macros like `serde_derive` or `rocket`
+      procMacro = {
+        enable = true,
       },
       -- Enable automatic formatting
       rustfmt = {
-        enableRangeFormatting = true,
-        extraArgs = { "--edition=2021" },
+        overrideCommand = { "rustfmt", "--edition", "2024" },
+        config = "~/.config/rustfmt/rustfmt.toml",
       },
       cargo = {
         allFeatures = true,
+        -- targetDir = "target/rust-analyzer",
       },
       imports = {
         group = {
           enable = false,
         },
       },
+      lsp = {
+        progress = {
+          enable = false, -- Disable progress notifications
+        },
+      },
       completion = {
         postfix = {
-          enable = false,
+          enable = true, -- Enable postfix completions like `.unwrap`
         },
+        autoimport = {
+          enable = true, -- Automatically import missing items
+        },
+      },
+      experimental = {
+        enable = true,
       },
     },
   },
@@ -61,6 +82,7 @@ lspconfig.rust_analyzer.setup({
     buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")              -- Hover documentation
     buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>") -- Code actions
     buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")    -- Rename symbol
+    buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>") -- Format Code
 
     if type(vim.lsp.buf.inlay_hint) == "function" then
       vim.api.nvim_create_autocmd("InsertLeave", {
@@ -78,8 +100,8 @@ lspconfig.rust_analyzer.setup({
     else
       print("Inlay hints--none")
     end
-    -- Print a messagee when Rust LSP attaches
-    print("Rust LSP attached!")
+    -- Print a message when Rust LSP attaches
+    print("rust-ready")
   end,
 })
 
@@ -103,6 +125,6 @@ local function conditional_hover()
   end)
 end
 
-vim.api.nvim_create_autocmd("CursorHold", {
-  callback = conditional_hover,
-})
+-- vim.api.nvim_create_autocmd("CursorHold", {
+--   callback = conditional_hover,
+-- })

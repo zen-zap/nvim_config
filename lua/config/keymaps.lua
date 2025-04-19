@@ -1,26 +1,20 @@
 -- keymaps.lua
 -- Custom key mappings
 
+vim.g.mapleader = " " -- Set leader key to space
+
 -- lua/config/keymaps.lua
 local opts = { noremap = true, silent = true }
-
--- Map visual mode Ctrl+C to copy to system clipboard (if not already set)
-vim.api.nvim_set_keymap("v", "<C-c>", '"+y', opts)
-
--- Create a custom user command :F to toggle the file explorer
-vim.api.nvim_create_user_command("F", "NvimTreeToggle", { desc = "Toggle File Explorer" })
-
--- Map Ctrl+F in normal mode to open Telescope's live grep (find function)
-vim.api.nvim_set_keymap("n", "<C-f>", ":Telescope live_grep<CR>", opts)
 
 -- Optional: Map K to show hover documentation (if using LSP)
 vim.api.nvim_set_keymap("n", "K", ":lua vim.lsp.buf.hover()<CR>", opts)
 
--- Custom undo/redo mappings:
--- Override default Ctrl+Z (normally suspends process) to undo
-vim.api.nvim_set_keymap("n", "<C-z>", "u", opts)
--- Map Ctrl+Shift+Z to redo
-vim.api.nvim_set_keymap("n", "<C-S-z>", "<C-r>", opts)
+-- Jump to start and end of line using the home row keys
+vim.keymap.set('', 'H', '^')
+vim.keymap.set('', 'L', '$')
+
+vim.keymap.set("n", "<Home>", "^", { noremap = true, silent = true })
+vim.keymap.set("i", "<Home>", "<C-o>^", { noremap = true, silent = true })
 
 
 -- In terminal mode, map Ctrl+Shift+C to kill the current terminal job
@@ -55,3 +49,26 @@ vim.api.nvim_set_keymap('n', '<C-S-Down>', '<C-v>j', { noremap = true, silent = 
 
 -- type viw to select the current word
 vim.api.nvim_set_keymap('n', '<Leader>e', 'viw', { noremap = true, silent = true })
+
+
+
+-- FOR SETTING UP TELESCOPE KEYBINDINGS
+
+local builtin = require("telescope.builtin")
+
+-- Map leader + f to find files
+vim.keymap.set("n", "<leader>f", builtin.find_files, { noremap = true, silent = true, desc = "Find Files" })
+
+-- Map leader + g to live grep (search text across files)
+vim.keymap.set("n", "<leader>g", builtin.live_grep, { noremap = true, silent = true, desc = "Live Grep" })
+
+-- Map leader + b to list open buffers
+vim.keymap.set("n", "<leader>b", builtin.buffers, { noremap = true, silent = true, desc = "List Buffers" })
+
+-- Map leader + h to search help tags
+vim.keymap.set("n", "<leader>h", builtin.help_tags, { noremap = true, silent = true, desc = "Help Tags" })
+
+-- Map leader + s to search LSP symbols (useful for functions, classes, etc.)
+vim.keymap.set("n", "<leader>s", builtin.lsp_dynamic_workspace_symbols, { noremap = true, silent = true, desc = "Search LSP Symbols" })
+
+vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, { noremap = true, silent = true, buffer = bufnr })

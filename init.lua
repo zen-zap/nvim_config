@@ -12,6 +12,9 @@ require("config.theme")
 -- Load key mappings
 require("config.keymaps")
 
+-- Load autocommands
+require("config.autocmds")
+
 -- Load LSP configuration (for Java, Rust, C)
 require("config.lsp")
 
