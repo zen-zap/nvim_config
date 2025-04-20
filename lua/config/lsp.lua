@@ -84,22 +84,22 @@ lspconfig.rust_analyzer.setup({
     buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")    -- Rename symbol
     buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>") -- Format Code
 
-    if type(vim.lsp.buf.inlay_hint) == "function" then
-      vim.api.nvim_create_autocmd("InsertLeave", {
-        buffer = bufnr,
-        callback = function()
-          vim.lsp.buf.inlay_hint(bufnr, true)
-        end,
-      })
-      vim.api.nvim_create_autocmd("InsertEnter", {
-        buffer = bufnr,
-        callback = function()
-          vim.lsp.buf.inlay_hint(bufnr, false)
-        end,
-      })
-    else
-      print("Inlay hints--none")
+    -- Define the function globally
+    function _G.toggle_inlay_hints()
+      local bufnr = vim.api.nvim_get_current_buf()
+      local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr })
+      vim.lsp.inlay_hint.enable(not enabled, { bufnr = bufnr })
     end
+
+
+    -- Keymap to toggle inlay hints
+    buf_map("n", "<leader>ih", "<cmd>lua toggle_inlay_hints()<CR>")
+
+    -- Enable inlay hints by default if supported
+    if client.supports_method("textDocument/inlayHint") then
+      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+    end
+
     -- Print a message when Rust LSP attaches
     print("rust-ready")
   end,

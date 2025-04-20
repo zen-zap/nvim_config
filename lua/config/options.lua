@@ -60,3 +60,8 @@ vim.opt.diffopt:append('iwhite')
 vim.keymap.set("n", "<leader>-", "<C-W>s", { desc = "Split Window Below", remap = true })
 vim.keymap.set("n", "<leader>|", "<C-W>v", { desc = "Split Window Right", remap = true })
 vim.keymap.set("n", "<leader>wd", "<C-W>c", { desc = "Delete Window", remap = true })
+
+vim.keymap.set("n", "<leader>h", "<C-w>h", { desc = "Move to Left Split" })
+vim.keymap.set("n", "<leader>j", "<C-w>j", { desc = "Move to Below Split" })
+vim.keymap.set("n", "<leader>k", "<C-w>k", { desc = "Move to Above Split" })
+vim.keymap.set("n", "<leader>l", "<C-w>l", { desc = "Move to Right Split" })
