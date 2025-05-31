@@ -4,6 +4,7 @@
 -- Ensure you have installed nvim-lspconfig:
 -- e.g., with your package manager or Lazy.nvim later.
 local lspconfig = require("lspconfig")
+local util = require("lspconfig.util")
 
 -- Configure Java LSP (jdtls) - make sure jdtls is installed on your system.
 lspconfig.jdtls.setup({
@@ -23,7 +24,7 @@ lspconfig.rust_analyzer.setup({
       checkOnSave = {
         enable = false,
       },
-      cachePriming = { enable = true },
+      cachePriming = { enable = false },
       -- Enable inlay hints
       inlayHints = {
         enable = true,
@@ -61,9 +62,9 @@ lspconfig.rust_analyzer.setup({
         postfix = {
           enable = true, -- Enable postfix completions like `.unwrap`
         },
-        autoimport = {
-          enable = true, -- Automatically import missing items
-        },
+        -- autoimport = {
+        --   enable = true, -- Automatically import missing items
+        -- },
       },
       experimental = {
         enable = true,
@@ -95,9 +96,10 @@ lspconfig.rust_analyzer.setup({
     -- Keymap to toggle inlay hints
     buf_map("n", "<leader>ih", "<cmd>lua toggle_inlay_hints()<CR>")
 
-    -- Enable inlay hints by default if supported
+    -- Enable inlay hints if supported
     if client.supports_method("textDocument/inlayHint") then
-      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      -- vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      print("inlay-hints-available")
     end
 
     -- Print a message when Rust LSP attaches
@@ -106,8 +108,57 @@ lspconfig.rust_analyzer.setup({
 })
 
 
--- Configure C/C++ LSP (clangd) - ensure clangd is installed.
-lspconfig.clangd.setup({})
+-- Configure C/C++ LSP (clangd) - ensure clangd is installed
+lspconfig.clangd.setup({
+  cmd = {
+    "clangd",                     -- The clangd binary must be in your PATH
+    "--background-index",         -- Persistent indexing for all files
+    "--clang-tidy",               -- Enable clang-tidy diagnostics
+    "--completion-style=detailed",-- Show parameter names & types in completion
+    "--header-insertion=never",   -- Disable auto-#include insertion (alt: "iwyu")
+    "-j=4",                       -- Four worker threads (adjust for your CPU)
+    "--offset-encoding=utf-16",
+    "--suggest-missing-includes",
+    "--log=info",
+  },
+
+  -- Determine project root by looking for compile_commands.json, CMakeLists.txt, or .git
+  root_dir = function(fname)
+    return util.root_pattern(
+      "compile_commands.json",
+      "compile_flags.txt",
+      "CMakeLists.txt",
+      ".git"
+    )(fname) or util.find_git_ancestor(fname)
+  end,
+
+  -- Setup client capabilities (use utf-16)
+  capabilities = (function()
+    local caps = vim.lsp.protocol.make_client_capabilities()
+    caps.offsetEncoding = { "utf-16" }
+    return caps
+  end)(),
+
+  -- -- Provide fallback flags if compile_commands.json is missing
+  -- init_options = {
+  --   fallbackFlags = { "-std=c++20", "-Wall", "-Wextra" },
+  -- },
+
+  -- on_attach: set up keymaps, inlay hints, etc.
+  on_attach = function(client, bufnr)
+    local buf_map = function(mode, lhs, rhs, desc)
+      vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
+    end
+
+    buf_map("n", "<leader>o", "<cmd>ClangdSwitchSourceHeader<CR>", "Switch Header/Source")
+    buf_map("n", "<leader>i", "<cmd>ClangdSymbolInfo<CR>", "Show Symbol Info")
+    buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", "Go To Definition")
+    buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", "Hover Documentation")
+    buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>", "Rename Symbol")
+    buf_map("n", "[d", "<cmd>lua vim.diagnostic.goto_prev()<CR>", "Previous Diagnostic")
+    buf_map("n", "]d", "<cmd>lua vim.diagnostic.goto_next()<CR>", "Next Diagnostic")
+  end,
+})
 
 local function conditional_hover()
   local params = vim.lsp.util.make_position_params()

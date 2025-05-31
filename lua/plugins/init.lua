@@ -3,7 +3,6 @@ return {
     -- nvim-lspconfig
     {
         "neovim/nvim-lspconfig",
-        lazy = false,
     },
 
     -- nvim-cmp (LSP-based code completion)
@@ -244,6 +243,21 @@ return {
         end
     },
 
+    {
+        "nvim-treesitter/nvim-treesitter",
+        opts = { ensure_installed = { "rust", "ron", "cpp", "java", "json5" } },
+        config = function(_, opts)
+            require("nvim-treesitter.configs").setup(opts)
+            -- Enable inlay hints for Rust
+            if vim.lsp.inlay_hint then
+                vim.lsp.inlay_hint.enable(true, { bufnr = 0 })
+            end
+        end,
+        lazy = false,
+        priority = 1000,
+    },
+    
+
     -- Sonokai colorscheme
     {
         "sainnhe/sonokai",
@@ -346,5 +360,74 @@ return {
                 },
             })
         end,
+    },
+
+    {
+        "mfussenegger/nvim-dap",
+        optional = true,
+        dependencies = {
+          -- Ensure C/C++ debugger is installed
+          "mason-org/mason.nvim",
+          optional = true,
+          opts = { ensure_installed = { "codelldb", "java-debug-adapter", "java-test" } },
+        },
+        opts = function()
+          local dap = require("dap")
+          if not dap.adapters["codelldb"] then
+            require("dap").adapters["codelldb"] = {
+              type = "server",
+              host = "localhost",
+              port = "${port}",
+              executable = {
+                command = "codelldb",
+                args = {
+                  "--port",
+                  "${port}",
+                },
+              },
+            }
+          end
+          for _, lang in ipairs({ "c", "cpp" }) do
+            dap.configurations[lang] = {
+              {
+                type = "codelldb",
+                request = "launch",
+                name = "Launch file",
+                program = function()
+                  return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
+                end,
+                cwd = "${workspaceFolder}",
+              },
+              {
+                type = "codelldb",
+                request = "attach",
+                name = "Attach to process",
+                pid = require("dap.utils").pick_process,
+                cwd = "${workspaceFolder}",
+              },
+            }
+          end
+        end,
+        opts = function()
+            -- Simple configuration to attach to remote java debug process
+            -- Taken directly from https://github.com/mfussenegger/nvim-dap/wiki/Java
+            local dap = require("dap")
+            dap.configurations.java = {
+              {
+                type = "java",
+                request = "attach",
+                name = "Debug (Attach) - Remote",
+                hostName = "127.0.0.1",
+                port = 5005,
+              },
+            }
+        end,
+    },
+
+    {
+        -- Ensure C/C++ debugger is installed
+        "mason-org/mason.nvim",
+        optional = true,
+        opts = { ensure_installed = { "codelldb", "java-debug-adapter", "java-test", "prettier" } },
     },
 }
