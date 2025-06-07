@@ -83,3 +83,15 @@ vim.keymap.set("n", "<leader>h", "<C-w>h", { desc = "Move to Left Split" })
 vim.keymap.set("n", "<leader>j", "<C-w>j", { desc = "Move to Below Split" })
 vim.keymap.set("n", "<leader>k", "<C-w>k", { desc = "Move to Above Split" })
 vim.keymap.set("n", "<leader>l", "<C-w>l", { desc = "Move to Right Split" })
+
+vim.keymap.set("n", "<leader>w", function()
+  if vim.opt.textwidth:get() == 0 then
+    vim.opt.textwidth = 80
+    vim.opt.formatoptions:append({ "c", "t" })
+    print("Auto-wrap enabled")
+  else
+    vim.opt.textwidth = 0
+    vim.opt.formatoptions:remove({ "c", "t" })
+    print("Auto-wrap disabled")
+  end
+end, { desc = "Toggle auto-wrap" })
