@@ -29,4 +29,3 @@ require("nvim-tree").setup({
         ignore = false,            -- Show ignored files
     },
   })
-  

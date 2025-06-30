@@ -15,7 +15,7 @@ vim.opt.number = true
 vim.opt.updatetime = 300
 
 -- For GUI clients (e.g., Neovide), you can set your font here:
--- vim.opt.guifont = "JetBrainsMono Nerd Font:h14"  -- change the font and size as you like
+vim.opt.guifont = "JetBrainsMono Nerd Font:h14"  -- change the font and size as you like
 
 -- Enable clipboard support
 vim.opt.clipboard = "unnamedplus"  -- Use system clipboard
@@ -66,4 +66,3 @@ vim.g.lazyvim_prettier_needs_config = false
 
 vim.opt.textwidth = 0
 vim.opt.formatoptions:remove({ "c", "t" })
-

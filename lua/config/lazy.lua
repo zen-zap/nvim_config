@@ -23,7 +23,7 @@ require("lazy").setup("plugins")
 
 -- This was from the previous setup
 
-
+ 
 -- require("lazy").setup({
 --   spec = {
     

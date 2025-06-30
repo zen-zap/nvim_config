@@ -7,53 +7,53 @@ return {
 
     -- nvim-cmp (LSP-based code completion)
     {
-		"hrsh7th/nvim-cmp",
-		-- load cmp on InsertEnter
-		event = "InsertEnter",
-		-- these dependencies will only be loaded when cmp loads
-		-- dependencies are always lazy-loaded unless specified otherwise
-		dependencies = {
-			'neovim/nvim-lspconfig',
-			"hrsh7th/cmp-nvim-lsp",
-			"hrsh7th/cmp-buffer",
-			"hrsh7th/cmp-path",
-		},
-		config = function()
-			local cmp = require'cmp'
-			cmp.setup({
-				snippet = {
-					-- REQUIRED by nvim-cmp. get rid of it once we can
-					expand = function(args)
-						vim.fn["vsnip#anonymous"](args.body)
-					end,
-				},
-				mapping = cmp.mapping.preset.insert({
-					['<C-b>'] = cmp.mapping.scroll_docs(-4),
-					['<C-f>'] = cmp.mapping.scroll_docs(4),
-					['<C-Space>'] = cmp.mapping.complete(),
-					['<C-e>'] = cmp.mapping.abort(),
-					-- Accept currently selected item.
-					-- Set `select` to `false` to only confirm explicitly selected items.
-					['<CR>'] = cmp.mapping.confirm({ select = true }),
-				}),
-				sources = cmp.config.sources({
-					{ name = 'nvim_lsp' },
-				}, {
-					{ name = 'path' },
-				}),
-				experimental = {
-					ghost_text = true,
-				},
-			})
-
-			-- Enable completing paths in :
-			cmp.setup.cmdline(':', {
-				sources = cmp.config.sources({
-					{ name = 'path' }
-				})
-			})
-		end
+	"hrsh7th/nvim-cmp",
+	-- load cmp on InsertEnter
+	event = "InsertEnter",
+	-- these dependencies will only be loaded when cmp loads
+	-- dependencies are always lazy-loaded unless specified otherwise
+	dependencies = {
+		'neovim/nvim-lspconfig',
+		"hrsh7th/cmp-nvim-lsp",
+		"hrsh7th/cmp-buffer",
+		"hrsh7th/cmp-path",
 	},
+	config = function()
+		local cmp = require'cmp'
+		cmp.setup({
+			snippet = {
+				-- REQUIRED by nvim-cmp. get rid of it once we can
+				expand = function(args)
+					vim.fn["vsnip#anonymous"](args.body)
+				end,
+			},
+			mapping = cmp.mapping.preset.insert({
+				['<C-b>'] = cmp.mapping.scroll_docs(-4),
+				['<C-f>'] = cmp.mapping.scroll_docs(4),
+				['<C-Space>'] = cmp.mapping.complete(),
+				['<C-e>'] = cmp.mapping.abort(),
+				-- Accept currently selected item.
+				-- Set `select` to `false` to only confirm explicitly selected items.
+				['<CR>'] = cmp.mapping.confirm({ select = true }),
+			}),
+			sources = cmp.config.sources({
+				{ name = 'nvim_lsp' },
+			}, {
+				{ name = 'path' },
+			}),
+			experimental = {
+				ghost_text = true,
+			},
+		})
+
+		-- Enable completing paths in :
+		cmp.setup.cmdline(':', {
+			sources = cmp.config.sources({
+				{ name = 'path' }
+			})
+		})
+	end
+    },
 
     -- Indent guides
     {
@@ -62,13 +62,14 @@ return {
         opts = {},
     },
 
-    -- Leap (quick navigation)
-    {
-        "ggandor/leap.nvim",
-        config = function()
-            require("leap").create_default_mappings()
-        end,
-    },
+
+	-- Leap (quick navigation)
+	{
+	"ggandor/leap.nvim",
+	config = function()
+		require("leap").add_default_mappings()
+	end,
+	},
 
     -- Matchup (enhanced % matching)
     {
@@ -177,7 +178,7 @@ return {
         priority = 1000,
         config = function()
             require("poimandres").setup({})
-            vim.cmd.colorscheme("poimandres")
+            -- vim.cmd.colorscheme("poimandres")
         end,
     },
 
@@ -265,7 +266,7 @@ return {
         priority = 1000,
         config = function()
             vim.g.sonokai_enable_italic = true
-            vim.cmd.colorscheme("sonokai")
+            -- vim.cmd.colorscheme("sonokai")
         end,
     },
 
@@ -276,7 +277,7 @@ return {
         priority = 1000,
         config = function()
             vim.g.everforest_enable_italic = true
-            vim.cmd.colorscheme("everforest")
+            -- vim.cmd.colorscheme("everforest")
         end,
     },
 
@@ -290,7 +291,7 @@ return {
             require("rose-pine").setup({
                 dark_variant = "main", -- Choose between "main", "moon", or "dawn"
             })
-            vim.cmd.colorscheme("rose-pine")
+            -- vim.cmd.colorscheme("rose-pine")
         end,
     },
 
@@ -300,7 +301,7 @@ return {
         lazy = false,
         priority = 1000,
         config = function()
-            vim.cmd.colorscheme("tokyonight")
+            -- vim.cmd.colorscheme("tokyonight")
         end,
     },
 
@@ -363,71 +364,110 @@ return {
     },
 
     {
+        "nvim-neotest/nvim-nio",
+        lazy = true,
+    },
+    
+    {
         "mfussenegger/nvim-dap",
-        optional = true,
         dependencies = {
-          -- Ensure C/C++ debugger is installed
-          "mason-org/mason.nvim",
-          optional = true,
-          opts = { ensure_installed = { "codelldb", "java-debug-adapter", "java-test" } },
+            "nvim-neotest/nvim-nio",
         },
-        opts = function()
-          local dap = require("dap")
-          if not dap.adapters["codelldb"] then
-            require("dap").adapters["codelldb"] = {
-              type = "server",
-              host = "localhost",
-              port = "${port}",
-              executable = {
-                command = "codelldb",
-                args = {
-                  "--port",
-                  "${port}",
-                },
-              },
-            }
-          end
-          for _, lang in ipairs({ "c", "cpp" }) do
-            dap.configurations[lang] = {
-              {
-                type = "codelldb",
-                request = "launch",
-                name = "Launch file",
-                program = function()
-                  return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
-                end,
-                cwd = "${workspaceFolder}",
-              },
-              {
-                type = "codelldb",
-                request = "attach",
-                name = "Attach to process",
-                pid = require("dap.utils").pick_process,
-                cwd = "${workspaceFolder}",
-              },
-            }
-          end
-        end,
-        opts = function()
-            -- Simple configuration to attach to remote java debug process
-            -- Taken directly from https://github.com/mfussenegger/nvim-dap/wiki/Java
+        config = function()
             local dap = require("dap")
+
+            -- C / C++ with codelldb
+            if not dap.adapters["codelldb"] then
+                dap.adapters["codelldb"] = {
+                    type = "server",
+                    host = "localhost",
+                    port = "${port}",
+                    executable = {
+                        command = "codelldb",
+                        args = { "--port", "${port}" },
+                    },
+                }
+            end
+
+            for _, lang in ipairs({ "c", "cpp" }) do
+                dap.configurations[lang] = {
+                    {
+                        type = "codelldb",
+                        request = "launch",
+                        name = "Launch file",
+                        program = function()
+                            return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
+                        end,
+                        cwd = "${workspaceFolder}",
+                    },
+                    {
+                        type = "codelldb",
+                        request = "attach",
+                        name = "Attach to process",
+                        pid = require("dap.utils").pick_process,
+                        cwd = "${workspaceFolder}",
+                    },
+                }
+            end
+
+            -- Java remote debug
             dap.configurations.java = {
-              {
-                type = "java",
-                request = "attach",
-                name = "Debug (Attach) - Remote",
-                hostName = "127.0.0.1",
-                port = 5005,
-              },
+                {
+                    type = "java",
+                    request = "attach",
+                    name = "Debug (Attach) - Remote",
+                    hostName = "127.0.0.1",
+                    port = 5005,
+                },
             }
         end,
     },
 
+
     {
-        -- Ensure C/C++ debugger is installed
-        "mason-org/mason.nvim",
-        optional = true,
-        opts = { ensure_installed = { "codelldb", "java-debug-adapter", "java-test", "prettier" } },
+      "rcarriga/nvim-dap-ui",
+      dependencies = { "mfussenegger/nvim-dap" },
+      config = function()
+        local dap = require("dap")
+        local dapui = require("dapui")
+        dapui.setup()
+
+        -- Auto open/close
+        dap.listeners.after.event_initialized["dapui_config"] = function()
+          dapui.open()
+        end
+        dap.listeners.before.event_terminated["dapui_config"] = function()
+          dapui.close()
+        end
+        dap.listeners.before.event_exited["dapui_config"] = function()
+          dapui.close()
+        end
+      end,
+    },
+
+    {
+        "williamboman/mason.nvim",
+        cmd = "Mason",
+        build = ":MasonUpdate",
+        opts = {
+            ensure_installed = {
+                "typescript-language-server",
+                "eslint-lsp",
+                "codelldb",
+                "java-debug-adapter",
+                "java-test",
+                "prettier",
+                "pyright",
+                "ruff",
+            },
+            ui = {
+                border = "rounded",
+                icons = {
+                    package_installed = "✓",
+                    package_pending = "➜",
+                    package_uninstalled = "✗",
+                },
+            },
+        },
     },
 }
