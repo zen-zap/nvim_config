@@ -155,3 +155,10 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move Selection Up" })
 
 -- Clear search highlighting
 vim.keymap.set("n", "<leader><space>", ":nohlsearch<CR>", { desc = "Clear Search Highlight" })
+
+-- -- For resizing splits with Alt + arrow keys -- did in tmux config
+-- -- Uncomment these lines if you want to use Alt + arrow keys for resizing splits
+-- vim.keymap.set("n", "<A-Up>",    ":resize +2<CR>")
+-- vim.keymap.set("n", "<A-Down>",  ":resize -2<CR>")
+-- vim.keymap.set("n", "<A-Left>",  ":vertical resize -2<CR>")
+-- vim.keymap.set("n", "<A-Right>", ":vertical resize +2<CR>")
