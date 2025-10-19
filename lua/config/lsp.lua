@@ -26,31 +26,139 @@ local function on_attach(client, bufnr)
 end
 
 -- Capabilities (e.g., for cmp-nvim-lsp)
-local capabilities = vim.lsp.protocol.make_client_capabilities()
+local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 capabilities.offsetEncoding = { "utf-16" }
 
 -- Java (jdtls)
 lspconfig.jdtls.setup({
     cmd = { "jdtls" },
-    root_dir = util.root_pattern("gradlew", "mvnw", ".git"),
+    root_dir = util.root_pattern(".git", "pom.xml", "build.gradle", "settings.gradle"),
     on_attach = on_attach,
     capabilities = capabilities,
+    settings = {
+        java = {
+            configuration = {
+                runtimes = {
+                    {
+                        name = "JavaSE-17",
+                        path = "/usr/lib/jvm/java-17-openjdk/", -- Adjust this path to your Java installation
+                    },
+                },
+            },
+            workspace = {
+                fileWatch = {
+                    enable = true,
+                },
+            },
+        },
+    },
+    init_options = {
+        bundles = {
+            vim.fn.glob("~/.local/share/nvim/java-debug/com.microsoft.java.debug.plugin/target/com.microsoft.java.debug.plugin-*.jar", 1),
+        },
+    },
+    -- Custom handlers for progress notifications
+    -- Get rid of the annoying progress notifications
+    handlers = {
+        ['language/status'] = function(_, result)
+            vim.print('***')
+        end,
+        ['$/progress'] = function(_, result, ctx)
+            vim.print('---')
+        end,
+    },
 })
 
 -- Rust (rust-analyzer)
 lspconfig.rust_analyzer.setup({
-    settings = {
-        ["rust-analyzer"] = {
-            checkOnSave = { enable = false },
-            assist = { importGranularity = "module", importPrefix = "by_self" },
-            cargo = { allFeatures = true },
-            procMacro = { enable = true },
-            inlayHints = { chainingHints = true },
+  settings = {
+    ["rust-analyzer"] = {
+      -- can Enable clippy diagnostics on save
+      checkOnSave = {
+        enable = false,
+      },
+      cachePriming = { enable = false }, -- FIX: Disable to prevent "querying metadata" hang
+      -- Enable inlay hints
+      inlayHints = {
+        enable = true,
+        typeHints = true,
+        chainingHints = true,
+        parameterHints = true, -- Show parameter hints
+        maxLength = 30, -- Limit the length of inlay hints
+      },
+      -- Enable proc macro support
+      -- This is necessary for procedural macros to work correctly
+      -- in Rust projects using macros like `serde_derive` or `rocket`
+      procMacro = {
+        enable = true,
+      },
+      -- Enable automatic formatting
+      rustfmt = {
+        overrideCommand = { "rustfmt", "--edition", "2024" },
+        config = "~/.config/rustfmt/rustfmt.toml",
+      },
+      cargo = {
+        allFeatures = false, -- FIX: Changed from true to prevent slow metadata queries
+        -- targetDir = "target/rust-analyzer",
+      },
+      imports = {
+        group = {
+          enable = false,
         },
+      },
+      lsp = {
+        progress = {
+          enable = false, -- Disable progress notifications
+        },
+      },
+      completion = {
+        postfix = {
+          enable = true, -- Enable postfix completions like `.unwrap`
+        },
+        autoimport = {
+          enable = true, -- Automatically import missing items
+        },
+      },
+      experimental = {
+        enable = true,
+      },
     },
-    on_attach = on_attach,
-    capabilities = capabilities,
+  },
+  on_attach = function(client, bufnr)
+    -- Key mappings for Rust LSP features
+    local buf_map = function(mode, lhs, rhs, opts)
+      opts = opts or { noremap = true, silent = true }
+      vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
+    end
+
+    -- Example mappings:
+    buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")        -- Go to definition
+    buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")              -- Hover documentation
+    buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>") -- Code actions
+    buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")    -- Rename symbol
+    buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>") -- Format Code
+
+    -- Define the function globally
+    function _G.toggle_inlay_hints()
+      local bufnr = vim.api.nvim_get_current_buf()
+      local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr })
+      vim.lsp.inlay_hint.enable(not enabled, { bufnr = bufnr })
+    end
+
+
+    -- Keymap to toggle inlay hints
+    buf_map("n", "<leader>ih", "<cmd>lua toggle_inlay_hints()<CR>")
+
+    -- Enable inlay hints by default if supported
+    if client.supports_method("textDocument/inlayHint") then
+      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+    end
+
+    -- Print a message when Rust LSP attaches
+    print("rust-ready")
+  end,
 })
+
 
 -- C/C++ (clangd)
 lspconfig.clangd.setup({
@@ -143,7 +251,62 @@ lspconfig.yamlls.setup({
     capabilities = capabilities,
 })
 
+-- Go (gopls)
+lspconfig.gopls.setup({
+  cmd = { "gopls" },  -- if Mason installed it, this should just work
+  filetypes = { "go", "gomod" },
+  root_dir = util.root_pattern("go.mod", ".git"),
+  settings = {
+    gopls = {
+      -- Core features
+      completeUnimported = true,        -- suggest completions for packages not yet imported
+      usePlaceholders = true,           -- for function/placeholders in completion responses
+      staticcheck = true,               -- enable more static analyses (linting)
 
+      -- Formatting / imports
+      gofumpt = false,                  -- if you prefer `gofumpt` strict formatting
+      -- local = "your.module/path",    -- (optional) for import grouping: sets local prefix 
+
+      -- Build/Workspace control
+      buildFlags = { "-tags=integration" },  -- example for custom build tags
+      env = { GOFLAGS = "-mod=readonly" },   -- example: pass env through gopls
+      directoryFilters = { "-**/vendor" },   -- exclude big vendor folders
+
+      -- Experimental / advanced
+      analyses = {
+        unusedparams = true,
+        unreachable = true,
+        nilness = true,
+      },
+      codelenses = {
+        generate = true,   -- show `//go:generate` lens
+        tidy = true,       -- show `go mod tidy` lens
+      },
+    },
+  },
+  on_attach = function(client, bufnr)
+    -- your keymaps for Go
+    local buf_map = function(mode, lhs, rhs, opts)
+      opts = opts or { noremap = true, silent = true }
+      vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
+    end
+
+    buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")
+    buf_map("n", "K",  "<cmd>lua vim.lsp.buf.hover()<CR>")
+    buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>")
+    buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
+    buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>")
+
+    print("go-ls ready")
+  end,
+})
+
+-- vim.diagnostic.config({
+--     virtual_text = false, -- Disable inline diagnostics
+--     signs = true,         -- Keep signs in the gutter
+--     underline = true,     -- Underline problematic code
+--     update_in_insert = false, -- Don't update diagnostics while typing
+-- })
 
 -- OLD config
 

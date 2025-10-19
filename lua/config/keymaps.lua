@@ -162,3 +162,13 @@ vim.keymap.set("n", "<leader><space>", ":nohlsearch<CR>", { desc = "Clear Search
 -- vim.keymap.set("n", "<A-Down>",  ":resize -2<CR>")
 -- vim.keymap.set("n", "<A-Left>",  ":vertical resize -2<CR>")
 -- vim.keymap.set("n", "<A-Right>", ":vertical resize +2<CR>")
+
+-- Go to the next buffer
+vim.keymap.set('n', '<leader>l', ':BufferLineCycleNext<CR>', {
+  desc = 'Go to Next Buffer'
+})
+
+-- Go to the previous buffer
+vim.keymap.set('n', '<leader>h', ':BufferLineCyclePrev<CR>', {
+  desc = 'Go to Previous Buffer'
+})

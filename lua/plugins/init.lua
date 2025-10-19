@@ -4,55 +4,76 @@ return {
     {
         "neovim/nvim-lspconfig",
     },
+    -- Bufferline (tab line)
+    {
+        'akinsho/bufferline.nvim', 
+        version = "*", 
+        dependencies = 'nvim-tree/nvim-web-devicons', 
+        config = function()
+            vim.opt.termguicolors = true
+            require("bufferline").setup{
+                options = {
+                    -- Add icons
+                    diagnostics = "nvim_lsp",
+                    show_buffer_icons = true,
+                    show_buffer_close_icons = true,
+                    separator_style = "thin",
+                }
+            }
+        end
+    },
 
     -- nvim-cmp (LSP-based code completion)
     {
-	"hrsh7th/nvim-cmp",
-	-- load cmp on InsertEnter
-	event = "InsertEnter",
-	-- these dependencies will only be loaded when cmp loads
-	-- dependencies are always lazy-loaded unless specified otherwise
-	dependencies = {
-		'neovim/nvim-lspconfig',
-		"hrsh7th/cmp-nvim-lsp",
-		"hrsh7th/cmp-buffer",
-		"hrsh7th/cmp-path",
-	},
-	config = function()
-		local cmp = require'cmp'
-		cmp.setup({
-			snippet = {
-				-- REQUIRED by nvim-cmp. get rid of it once we can
-				expand = function(args)
-					vim.fn["vsnip#anonymous"](args.body)
-				end,
-			},
-			mapping = cmp.mapping.preset.insert({
-				['<C-b>'] = cmp.mapping.scroll_docs(-4),
-				['<C-f>'] = cmp.mapping.scroll_docs(4),
-				['<C-Space>'] = cmp.mapping.complete(),
-				['<C-e>'] = cmp.mapping.abort(),
-				-- Accept currently selected item.
-				-- Set `select` to `false` to only confirm explicitly selected items.
-				['<CR>'] = cmp.mapping.confirm({ select = true }),
-			}),
-			sources = cmp.config.sources({
-				{ name = 'nvim_lsp' },
-			}, {
-				{ name = 'path' },
-			}),
-			experimental = {
-				ghost_text = true,
-			},
-		})
+        "hrsh7th/nvim-cmp",
+        -- load cmp on InsertEnter
+        event = "InsertEnter",
+        -- these dependencies will only be loaded when cmp loads
+        -- dependencies are always lazy-loaded unless specified otherwise
+        dependencies = {
+            'neovim/nvim-lspconfig',
+            "hrsh7th/cmp-nvim-lsp",
+            "hrsh7th/cmp-buffer",
+            "hrsh7th/cmp-path",
+            "hrsh7th/cmp-vsnip", -- Add cmp-vsnip for snippet completion
+            "hrsh7th/vim-vsnip", -- Snippet engine
+        },
+        config = function()
+            local cmp = require'cmp'
+            cmp.setup({
+                snippet = {
+                    -- REQUIRED by nvim-cmp. get rid of it once we can
+                    expand = function(args)
+                        vim.fn["vsnip#anonymous"](args.body)
+                    end,
+                },
+                mapping = cmp.mapping.preset.insert({
+                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+                    ['<C-Space>'] = cmp.mapping.complete(),
+                    ['<C-e>'] = cmp.mapping.abort(),
+                    -- Accept currently selected item.
+                    -- Set `select` to `false` to only confirm explicitly selected items.
+                    ['<CR>'] = cmp.mapping.confirm({ select = true }),
+                }),
+                sources = cmp.config.sources({
+                    { name = 'nvim_lsp' },
+                    { name = "vsnip" }, -- Enable vsnip as a source
+                }, {
+                    { name = 'path' },
+                }),
+                experimental = {
+                    ghost_text = true,
+                },
+            })
 
-		-- Enable completing paths in :
-		cmp.setup.cmdline(':', {
-			sources = cmp.config.sources({
-				{ name = 'path' }
-			})
-		})
-	end
+            -- Enable completing paths in :
+            cmp.setup.cmdline(':', {
+                sources = cmp.config.sources({
+                    { name = 'path' }
+                })
+            })
+        end
     },
 
     -- Indent guides
@@ -63,13 +84,13 @@ return {
     },
 
 
-	-- Leap (quick navigation)
-	{
-	"ggandor/leap.nvim",
-	config = function()
-		require("leap").add_default_mappings()
-	end,
-	},
+    -- Leap (quick navigation)
+    {
+        "ggandor/leap.nvim",
+        config = function()
+            require("leap").add_default_mappings()
+        end,
+    },
 
     -- Matchup (enhanced % matching)
     {
@@ -132,7 +153,37 @@ return {
     },
 
     -- nvim-tree (file explorer)
-    { "nvim-tree/nvim-tree.lua", lazy = false, priority = 1000 },
+    {
+        'nvim-tree/nvim-tree.lua',
+        dependencies = 'nvim-tree/nvim-web-devicons',
+        config = function()
+        require("nvim-tree").setup({
+            -- THIS IS THE KEY: Set the file tree to the left
+            view = {
+            side = "left",
+            },
+            -- Add git highlighting
+            git = {
+            enable = true,
+            },
+            -- Disable netrw (the default file explorer)
+            disable_netrw = true,
+        })
+        end
+    },
+
+    -- Lualine (statusline)
+    {
+        'nvim-lualine/lualine.nvim',
+        dependencies = { 'nvim-tree/nvim-web-devicons' },
+        config = function()
+        require('lualine').setup({
+            options = {
+            theme = 'auto', -- Will match your colorscheme
+            }
+        })
+        end
+    },
 
     -- Devicons
     { "nvim-tree/nvim-web-devicons", opts = {}, lazy = false, priority = 1000 },
@@ -257,7 +308,8 @@ return {
         lazy = false,
         priority = 1000,
     },
-    
+
+    {'akinsho/bufferline.nvim', version = "*", dependencies = 'nvim-tree/nvim-web-devicons'},
 
     -- Sonokai colorscheme
     {
@@ -305,6 +357,60 @@ return {
         end,
     },
 
+
+    { "blazkowolf/gruber-darker.nvim" },
+
+    { "ramojus/mellifluous.nvim"},
+
+    {"kdheepak/monochrome.nvim"},
+
+    -- {
+    --     "dark-orchid/neovim",
+    --     priority = 1000, -- Good to add this to match your other themes
+    --     opts = {
+    --         -- This is the part that's missing
+    --         -- The error involves Telescope, so you should enable its integration
+    --         integrations = {
+    --             telescope = true,
+    --             treesitter = true,
+    --             lsp = true,
+    --         }
+    --     }
+    -- },
+
+    {
+        'everviolet/nvim', name = 'evergarden',
+        priority = 1000,
+    },
+
+    { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
+
+    {
+        'ribru17/bamboo.nvim',
+        lazy = false,
+        priority = 1000,
+        config = function()
+            require('bamboo').setup {
+                -- optional configuration here
+            }
+            require('bamboo').load()
+        end,
+    },
+
+    {
+        "dgox16/oldworld.nvim",
+        lazy = false,
+        priority = 1000,
+    },
+
+    {
+        "xero/miasma.nvim",
+        lazy = false,
+        priority = 1000,
+        config = function()
+            vim.cmd("colorscheme miasma")
+        end,
+    },
     -- Fidget (LSP progress)
     {
         "j-hui/fidget.nvim",
@@ -324,6 +430,9 @@ return {
                 sources = {
                     ["rust-analyzer"] = {
                         ignore = true, -- Completely hide rust-analyzer progress
+                    },
+                    ["jdtls"] = {
+                        ignore = true, -- Completely hide progress notifications from jdtls
                     },
                 },
             })
@@ -367,7 +476,7 @@ return {
         "nvim-neotest/nvim-nio",
         lazy = true,
     },
-    
+
     {
         "mfussenegger/nvim-dap",
         dependencies = {
@@ -425,24 +534,24 @@ return {
 
 
     {
-      "rcarriga/nvim-dap-ui",
-      dependencies = { "mfussenegger/nvim-dap" },
-      config = function()
-        local dap = require("dap")
-        local dapui = require("dapui")
-        dapui.setup()
+        "rcarriga/nvim-dap-ui",
+        dependencies = { "mfussenegger/nvim-dap" },
+        config = function()
+            local dap = require("dap")
+            local dapui = require("dapui")
+            dapui.setup()
 
-        -- Auto open/close
-        dap.listeners.after.event_initialized["dapui_config"] = function()
-          dapui.open()
-        end
-        dap.listeners.before.event_terminated["dapui_config"] = function()
-          dapui.close()
-        end
-        dap.listeners.before.event_exited["dapui_config"] = function()
-          dapui.close()
-        end
-      end,
+            -- Auto open/close
+            dap.listeners.after.event_initialized["dapui_config"] = function()
+                dapui.open()
+            end
+            dap.listeners.before.event_terminated["dapui_config"] = function()
+                dapui.close()
+            end
+            dap.listeners.before.event_exited["dapui_config"] = function()
+                dapui.close()
+            end
+        end,
     },
 
     {
@@ -459,6 +568,7 @@ return {
                 "prettier",
                 "pyright",
                 "ruff",
+                "gopls",
             },
             ui = {
                 border = "rounded",
