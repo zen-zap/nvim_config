@@ -364,19 +364,7 @@ return {
 
     {"kdheepak/monochrome.nvim"},
 
-    -- {
-    --     "dark-orchid/neovim",
-    --     priority = 1000, -- Good to add this to match your other themes
-    --     opts = {
-    --         -- This is the part that's missing
-    --         -- The error involves Telescope, so you should enable its integration
-    --         integrations = {
-    --             telescope = true,
-    --             treesitter = true,
-    --             lsp = true,
-    --         }
-    --     }
-    -- },
+    -- make something like the dark-orchid theme
 
     {
         'everviolet/nvim', name = 'evergarden',
