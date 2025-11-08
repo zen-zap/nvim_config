@@ -264,7 +264,7 @@ lspconfig.gopls.setup({
       staticcheck = true,               -- enable more static analyses (linting)
 
       -- Formatting / imports
-      gofumpt = false,                  -- if you prefer `gofumpt` strict formatting
+      gofumpt = true,                  -- if you prefer `gofumpt` strict formatting
       -- local = "your.module/path",    -- (optional) for import grouping: sets local prefix 
 
       -- Build/Workspace control
