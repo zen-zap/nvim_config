@@ -399,6 +399,24 @@ return {
             vim.cmd("colorscheme miasma")
         end,
     },
+
+    {
+        'embark-theme/vim',
+        lazy = false,
+        priority = 1000,
+        name = 'embark'
+    },
+
+    { 'datsfilipe/vesper.nvim' },
+
+    {
+        "ficcdaf/ashen.nvim",
+    },
+
+    {
+        "kuri-sun/yoda.nvim",
+    },
+
     -- Fidget (LSP progress)
     {
         "j-hui/fidget.nvim",
