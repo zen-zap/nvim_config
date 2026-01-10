@@ -88,7 +88,10 @@ return {
     {
         "ggandor/leap.nvim",
         config = function()
-            require("leap").add_default_mappings()
+            -- Use the recommended plug mappings (modern API)
+            vim.keymap.set({'n', 'x', 'o'}, 's',  '<Plug>(leap-forward)')
+            vim.keymap.set({'n', 'x', 'o'}, 'S',  '<Plug>(leap-backward)')
+            vim.keymap.set({'n', 'x', 'o'}, 'gs', '<Plug>(leap-from-window)')
         end,
     },
 
@@ -363,8 +366,6 @@ return {
     { "ramojus/mellifluous.nvim"},
 
     {"kdheepak/monochrome.nvim"},
-
-    -- make something like the dark-orchid theme
 
     {
         'everviolet/nvim', name = 'evergarden',

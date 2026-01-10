@@ -1,5 +1,10 @@
-local lspconfig = require("lspconfig")
+-- Use new nvim 0.11+ LSP config API (not require('lspconfig'))
 local util = require("lspconfig.util")
+
+-- Helper to check if command exists
+local function has_cmd(cmd)
+    return vim.fn.executable(cmd) == 1
+end
 
 -- Common on_attach function for all servers
 local function on_attach(client, bufnr)
@@ -29,77 +34,67 @@ end
 local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 capabilities.offsetEncoding = { "utf-16" }
 
--- Java (jdtls)
-lspconfig.jdtls.setup({
-    cmd = { "jdtls" },
-    root_dir = util.root_pattern(".git", "pom.xml", "build.gradle", "settings.gradle"),
-    on_attach = on_attach,
-    capabilities = capabilities,
-    settings = {
-        java = {
-            configuration = {
-                runtimes = {
-                    {
-                        name = "JavaSE-17",
-                        path = "/usr/lib/jvm/java-17-openjdk/", -- Adjust this path to your Java installation
+-- Java (jdtls) - only enable if executable exists
+if has_cmd('jdtls') then
+    vim.lsp.config('jdtls', {
+        cmd = { "jdtls" },
+        root_dir = util.root_pattern(".git", "pom.xml", "build.gradle", "settings.gradle"),
+        on_attach = on_attach,
+        capabilities = capabilities,
+        settings = {
+            java = {
+                configuration = {
+                    runtimes = {
+                        {
+                            name = "JavaSE-17",
+                            path = "/usr/lib/jvm/java-17-openjdk/",
+                        },
+                    },
+                },
+                workspace = {
+                    fileWatch = {
+                        enable = true,
                     },
                 },
             },
-            workspace = {
-                fileWatch = {
-                    enable = true,
-                },
-            },
         },
-    },
-    init_options = {
-        bundles = {
-            vim.fn.glob("~/.local/share/nvim/java-debug/com.microsoft.java.debug.plugin/target/com.microsoft.java.debug.plugin-*.jar", 1),
+        init_options = {
+            bundles = vim.split(vim.fn.glob("~/.local/share/nvim/java-debug/com.microsoft.java.debug.plugin/target/com.microsoft.java.debug.plugin-*.jar"), '\n', true),
         },
-    },
-    -- Custom handlers for progress notifications
-    -- Get rid of the annoying progress notifications
-    handlers = {
-        ['language/status'] = function(_, result)
-            vim.print('***')
-        end,
-        ['$/progress'] = function(_, result, ctx)
-            vim.print('---')
-        end,
-    },
-})
+        handlers = {
+            ['language/status'] = function() end,
+            ['$/progress'] = function() end,
+        },
+    })
+    vim.lsp.enable('jdtls')
+else
+    vim.notify('jdtls not found in PATH. Install with :Mason or pacman -S jdtls', vim.log.levels.WARN)
+end
 
 -- Rust (rust-analyzer)
-lspconfig.rust_analyzer.setup({
+vim.lsp.config('rust_analyzer', {
   settings = {
     ["rust-analyzer"] = {
-      -- can Enable clippy diagnostics on save
       checkOnSave = {
         enable = false,
       },
-      cachePriming = { enable = false }, -- FIX: Disable to prevent "querying metadata" hang
-      -- Enable inlay hints
+      cachePriming = { enable = false },
       inlayHints = {
         enable = true,
         typeHints = true,
         chainingHints = true,
-        parameterHints = true, -- Show parameter hints
-        maxLength = 30, -- Limit the length of inlay hints
+        parameterHints = true,
+        maxLength = 30,
       },
-      -- Enable proc macro support
-      -- This is necessary for procedural macros to work correctly
-      -- in Rust projects using macros like `serde_derive` or `rocket`
       procMacro = {
         enable = true,
       },
-      -- Enable automatic formatting
       rustfmt = {
         overrideCommand = { "rustfmt", "--edition", "2024" },
         config = "~/.config/rustfmt/rustfmt.toml",
       },
       cargo = {
-        allFeatures = false, -- FIX: Changed from true to prevent slow metadata queries
-        -- targetDir = "target/rust-analyzer",
+        allFeatures = false,
       },
       imports = {
         group = {
@@ -108,15 +103,15 @@ lspconfig.rust_analyzer.setup({
       },
       lsp = {
         progress = {
-          enable = false, -- Disable progress notifications
+          enable = false,
         },
       },
       completion = {
         postfix = {
-          enable = true, -- Enable postfix completions like `.unwrap`
+          enable = true,
         },
         autoimport = {
-          enable = true, -- Automatically import missing items
+          enable = true,
         },
       },
       experimental = {
@@ -125,43 +120,36 @@ lspconfig.rust_analyzer.setup({
     },
   },
   on_attach = function(client, bufnr)
-    -- Key mappings for Rust LSP features
     local buf_map = function(mode, lhs, rhs, opts)
       opts = opts or { noremap = true, silent = true }
       vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
     end
 
-    -- Example mappings:
-    buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")        -- Go to definition
-    buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")              -- Hover documentation
-    buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>") -- Code actions
-    buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")    -- Rename symbol
-    buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>") -- Format Code
+    buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")
+    buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")
+    buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>")
+    buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
+    buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>")
 
-    -- Define the function globally
     function _G.toggle_inlay_hints()
       local bufnr = vim.api.nvim_get_current_buf()
       local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr })
       vim.lsp.inlay_hint.enable(not enabled, { bufnr = bufnr })
     end
 
-
-    -- Keymap to toggle inlay hints
     buf_map("n", "<leader>ih", "<cmd>lua toggle_inlay_hints()<CR>")
 
-    -- Enable inlay hints by default if supported
     if client.supports_method("textDocument/inlayHint") then
       vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
     end
 
-    -- Print a message when Rust LSP attaches
     print("rust-ready")
   end,
 })
-
+vim.lsp.enable('rust_analyzer')
 
 -- C/C++ (clangd)
-lspconfig.clangd.setup({
+vim.lsp.config('clangd', {
     cmd = {
         "clangd",
         "--background-index",
@@ -178,9 +166,10 @@ lspconfig.clangd.setup({
     on_attach = on_attach,
     capabilities = capabilities,
 })
+vim.lsp.enable('clangd')
 
 -- TypeScript/JavaScript (tsserver via typescript-language-server)
-lspconfig.ts_ls.setup({
+vim.lsp.config('ts_ls', {
     cmd = { "typescript-language-server", "--stdio" },
     root_dir = util.root_pattern("package.json", "tsconfig.json", ".git"),
     init_options = {
@@ -199,9 +188,10 @@ lspconfig.ts_ls.setup({
     end,
     capabilities = capabilities,
 })
+vim.lsp.enable('ts_ls')
 
 -- ESLint (formatting + linting)
-lspconfig.eslint.setup({
+vim.lsp.config('eslint', {
     on_attach = function(client, bufnr)
         vim.api.nvim_create_autocmd("BufWritePre", {
             buffer = bufnr,
@@ -211,21 +201,24 @@ lspconfig.eslint.setup({
     end,
     capabilities = capabilities,
 })
+vim.lsp.enable('eslint')
 
 -- Python (pyright)
-lspconfig.pyright.setup({
+vim.lsp.config('pyright', {
     on_attach = on_attach,
     capabilities = capabilities,
 })
+vim.lsp.enable('pyright')
 
 -- Ruff (linting/formatting for Python)
-lspconfig.ruff.setup({
+vim.lsp.config('ruff', {
     on_attach = on_attach,
     capabilities = capabilities,
 })
+vim.lsp.enable('ruff')
 
 -- Lua (neovim runtime)
-lspconfig.lua_ls.setup({
+vim.lsp.config('lua_ls', {
     settings = {
         Lua = {
             runtime = { version = "LuaJIT" },
@@ -237,55 +230,49 @@ lspconfig.lua_ls.setup({
     on_attach = on_attach,
     capabilities = capabilities,
 })
+vim.lsp.enable('lua_ls')
 
 -- Bash (shell scripts)
-lspconfig.bashls.setup({
+vim.lsp.config('bashls', {
     on_attach = on_attach,
     capabilities = capabilities,
 })
+vim.lsp.enable('bashls')
 
 -- YAML
-lspconfig.yamlls.setup({
+vim.lsp.config('yamlls', {
     settings = { yaml = { keyOrdering = false } },
     on_attach = on_attach,
     capabilities = capabilities,
 })
+vim.lsp.enable('yamlls')
 
 -- Go (gopls)
-lspconfig.gopls.setup({
-  cmd = { "gopls" },  -- if Mason installed it, this should just work
+vim.lsp.config('gopls', {
+  cmd = { "gopls" },
   filetypes = { "go", "gomod" },
   root_dir = util.root_pattern("go.mod", ".git"),
   settings = {
     gopls = {
-      -- Core features
-      completeUnimported = true,        -- suggest completions for packages not yet imported
-      usePlaceholders = true,           -- for function/placeholders in completion responses
-      staticcheck = true,               -- enable more static analyses (linting)
-
-      -- Formatting / imports
-      gofumpt = true,                  -- if you prefer `gofumpt` strict formatting
-      -- local = "your.module/path",    -- (optional) for import grouping: sets local prefix 
-
-      -- Build/Workspace control
-      buildFlags = { "-tags=integration" },  -- example for custom build tags
-      env = { GOFLAGS = "-mod=readonly" },   -- example: pass env through gopls
-      directoryFilters = { "-**/vendor" },   -- exclude big vendor folders
-
-      -- Experimental / advanced
+      completeUnimported = true,
+      usePlaceholders = true,
+      staticcheck = true,
+      gofumpt = true,
+      buildFlags = { "-tags=integration" },
+      env = { GOFLAGS = "-mod=readonly" },
+      directoryFilters = { "-**/vendor" },
       analyses = {
         unusedparams = true,
         unreachable = true,
         nilness = true,
       },
       codelenses = {
-        generate = true,   -- show `//go:generate` lens
-        tidy = true,       -- show `go mod tidy` lens
+        generate = true,
+        tidy = true,
       },
     },
   },
   on_attach = function(client, bufnr)
-    -- your keymaps for Go
     local buf_map = function(mode, lhs, rhs, opts)
       opts = opts or { noremap = true, silent = true }
       vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
@@ -300,174 +287,4 @@ lspconfig.gopls.setup({
     print("go-ls ready")
   end,
 })
-
--- vim.diagnostic.config({
---     virtual_text = false, -- Disable inline diagnostics
---     signs = true,         -- Keep signs in the gutter
---     underline = true,     -- Underline problematic code
---     update_in_insert = false, -- Don't update diagnostics while typing
--- })
-
--- OLD config
-
--- -- lsp.lua
--- -- LSP configuration for Java, Rust, and C
-
--- -- Ensure you have installed nvim-lspconfig:
--- -- e.g., with your package manager or Lazy.nvim later.
--- local lspconfig = require("lspconfig")
--- local util = require("lspconfig.util")
-
--- -- Configure Java LSP (jdtls) - make sure jdtls is installed on your system.
--- lspconfig.jdtls.setup({
---   -- Basic configuration for jdtls; add your own settings if needed.
---   cmd = { "jdtls" },
---   root_dir = lspconfig.util.root_pattern("gradlew", "mvnw", ".git"),
--- })
-
--- -- Ensure the lspconfig module is required
--- local lspconfig = require('lspconfig')
-
--- -- Configure rust-analyzer
--- lspconfig.rust_analyzer.setup({
---   settings = {
---     ["rust-analyzer"] = {
---       -- can Enable clippy diagnostics on save
---       checkOnSave = {
---         enable = false,
---       },
---       cachePriming = { enable = false },
---       -- Enable inlay hints
---       inlayHints = {
---         enable = true,
---         typeHints = true,
---         chainingHints = true,
---         parameterHints = true, -- Show parameter hints
---         maxLength = 30, -- Limit the length of inlay hints
---       },
---       -- Enable proc macro support
---       -- This is necessary for procedural macros to work correctly
---       -- in Rust projects using macros like `serde_derive` or `rocket`
---       procMacro = {
---         enable = true,
---       },
---       -- Enable automatic formatting
---       rustfmt = {
---         overrideCommand = { "rustfmt", "--edition", "2024" },
---         config = "~/.config/rustfmt/rustfmt.toml",
---       },
---       cargo = {
---         allFeatures = true,
---         -- targetDir = "target/rust-analyzer",
---       },
---       imports = {
---         group = {
---           enable = false,
---         },
---       },
---       lsp = {
---         progress = {
---           enable = false, -- Disable progress notifications
---         },
---       },
---       completion = {
---         postfix = {
---           enable = true, -- Enable postfix completions like `.unwrap`
---         },
---         -- autoimport = {
---         --   enable = true, -- Automatically import missing items
---         -- },
---       },
---       experimental = {
---         enable = true,
---       },
---     },
---   },
---   on_attach = function(client, bufnr)
---     -- Key mappings for Rust LSP features
---     local buf_map = function(mode, lhs, rhs, opts)
---       opts = opts or { noremap = true, silent = true }
---       vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
---     end
-
---     -- Example mappings:
---     buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")        -- Go to definition
---     buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")              -- Hover documentation
---     buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>") -- Code actions
---     buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")    -- Rename symbol
---     buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>") -- Format Code
-
---     -- Define the function globally
---     function _G.toggle_inlay_hints()
---       local bufnr = vim.api.nvim_get_current_buf()
---       local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr })
---       vim.lsp.inlay_hint.enable(not enabled, { bufnr = bufnr })
---     end
-
-
---     -- Keymap to toggle inlay hints
---     buf_map("n", "<leader>ih", "<cmd>lua toggle_inlay_hints()<CR>")
-
---     -- Enable inlay hints if supported
---     if client.supports_method("textDocument/inlayHint") then
---       -- vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
---       print("inlay-hints-available")
---     end
-
---     -- Print a message when Rust LSP attaches
---     print("rust-ready")
---   end,
--- })
-
-
--- -- Configure C/C++ LSP (clangd) - ensure clangd is installed
--- lspconfig.clangd.setup({
---   cmd = {
---     "clangd",                     -- The clangd binary must be in your PATH
---     "--background-index",         -- Persistent indexing for all files
---     "--clang-tidy",               -- Enable clang-tidy diagnostics
---     "--completion-style=detailed",-- Show parameter names & types in completion
---     "--header-insertion=never",   -- Disable auto-#include insertion (alt: "iwyu")
---     "-j=4",                       -- Four worker threads (adjust for your CPU)
---     "--offset-encoding=utf-16",
---     "--suggest-missing-includes",
---     "--log=info",
---   },
-
---   -- Determine project root by looking for compile_commands.json, CMakeLists.txt, or .git
---   root_dir = function(fname)
---     return util.root_pattern(
---       "compile_commands.json",
---       "compile_flags.txt",
---       "CMakeLists.txt",
---       ".git"
---     )(fname) or util.find_git_ancestor(fname)
---   end,
-
---   -- Setup client capabilities (use utf-16)
---   capabilities = (function()
---     local caps = vim.lsp.protocol.make_client_capabilities()
---     caps.offsetEncoding = { "utf-16" }
---     return caps
---   end)(),
-
---   -- -- Provide fallback flags if compile_commands.json is missing
---   -- init_options = {
---   --   fallbackFlags = { "-std=c++20", "-Wall", "-Wextra" },
---   -- },
-
---   -- on_attach: set up keymaps, inlay hints, etc.
---   on_attach = function(client, bufnr)
---     local buf_map = function(mode, lhs, rhs, desc)
---       vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
---     end
-
---     buf_map("n", "<leader>o", "<cmd>ClangdSwitchSourceHeader<CR>", "Switch Header/Source")
---     buf_map("n", "<leader>i", "<cmd>ClangdSymbolInfo<CR>", "Show Symbol Info")
---     buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", "Go To Definition")
---     buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", "Hover Documentation")
---     buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>", "Rename Symbol")
---     buf_map("n", "[d", "<cmd>lua vim.diagnostic.goto_prev()<CR>", "Previous Diagnostic")
---     buf_map("n", "]d", "<cmd>lua vim.diagnostic.goto_next()<CR>", "Next Diagnostic")
---   end,
--- })
+vim.lsp.enable('gopls')

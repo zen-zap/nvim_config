@@ -95,7 +95,7 @@ end, { desc = "Toggle auto-wrap" })
 
 -- Enhanced Colorscheme switcher with preview
 local colorschemes = {
-  "orchid",          -- Custom Dark Orchid theme
+  "vivid_nightfall", -- Custom Vivid Nightfall theme
   "poimandres",
   "kanagawa-dragon", 
   "nordic",
@@ -106,7 +106,7 @@ local colorschemes = {
 }
 
 local current_colorscheme = 1 
--- Start with "orchid" -- there is previous select memory, so it will start with the last used colorscheme
+-- Start with "vivid_nightfall" -- there is previous select memory, so it will start with the last used colorscheme
 
 -- Cycle through colorschemes
 vim.keymap.set("n", "<leader>cs", function()

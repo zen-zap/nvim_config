@@ -56,9 +56,7 @@ vim.opt.undofile = true
 --- by ignoring whitespace
 vim.opt.diffopt:append('iwhite')
 
-
-
-require('leap').set_default_keymaps()
+-- Leap keymaps are configured in lua/plugins/init.lua
 
 -- Enable the option to require a Prettier config file
 -- If no prettier config file is found, the formatter will not be used
