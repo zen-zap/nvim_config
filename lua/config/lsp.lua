@@ -67,224 +67,278 @@ if has_cmd('jdtls') then
         },
     })
     vim.lsp.enable('jdtls')
-else
-    vim.notify('jdtls not found in PATH. Install with :Mason or pacman -S jdtls', vim.log.levels.WARN)
+end
+-- Note: jdtls silently skipped if not installed
+
+-- Rust (rust-analyzer) - only enable for Rust files
+if has_cmd('rust-analyzer') then
+  -- Auto-start for Rust files
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "rust",
+    callback = function(ev)
+      local bufname = vim.api.nvim_buf_get_name(ev.buf)
+      local root_dir = util.root_pattern("Cargo.toml", "rust-project.json")(bufname)
+      
+      if not root_dir then
+        return
+      end
+      
+      vim.lsp.start({
+        name = 'rust_analyzer',
+        cmd = { "rust-analyzer" },
+        root_dir = root_dir,
+        capabilities = capabilities,
+        settings = {
+          ["rust-analyzer"] = {
+            -- Note: Per-project rust-analyzer.toml will override these
+            checkOnSave = {
+              enable = false,
+            },
+            cargo = {
+              allFeatures = false,
+              -- Will be overridden by rust-analyzer.toml if present
+            },
+            procMacro = {
+              enable = true,  -- Override in rust-analyzer.toml for blog_os
+            },
+            rustfmt = {
+              overrideCommand = { "rustfmt", "--edition", "2024" },
+            },
+            inlayHints = {
+              enable = true,
+              typeHints = true,
+              chainingHints = true,
+              parameterHints = true,
+              maxLength = 30,
+            },
+            lens = {
+              enable = true,
+              run = { enable = true },
+              debug = { enable = true },
+              implementations = { enable = true },
+              references = {
+                adt = { enable = true },
+                enumVariant = { enable = true },
+                method = { enable = true },
+                trait = { enable = true },
+              },
+            },
+          },
+        },
+        on_attach = function(client, bufnr)
+          on_attach(client, bufnr)
+          
+          -- Rust-specific format keymap
+          vim.keymap.set('n', 'rf', vim.lsp.buf.format, { buffer = bufnr, desc = "Format Rust" })
+
+          -- Enable inlay hints
+          if client.supports_method("textDocument/inlayHint") then
+            vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+          end
+          
+          vim.notify("rust-analyzer ready", vim.log.levels.INFO)
+        end,
+      })
+    end,
+  })
 end
 
--- Rust (rust-analyzer)
-vim.lsp.config('rust_analyzer', {
-  settings = {
-    ["rust-analyzer"] = {
-      checkOnSave = {
-        enable = false,
+-- C/C++ (clangd) - only enable for C/C++ files
+if has_cmd('clangd') then
+  vim.lsp.config('clangd', {
+      cmd = {
+          "clangd",
+          "--background-index",
+          "--clang-tidy",
+          "--completion-style=detailed",
+          "--header-insertion=never",
+          "-j=4",
+          "--offset-encoding=utf-16",
       },
-      cachePriming = { enable = false },
-      inlayHints = {
-        enable = true,
-        typeHints = true,
-        chainingHints = true,
-        parameterHints = true,
-        maxLength = 30,
-      },
-      procMacro = {
-        enable = true,
-      },
-      rustfmt = {
-        overrideCommand = { "rustfmt", "--edition", "2024" },
-        config = "~/.config/rustfmt/rustfmt.toml",
-      },
-      cargo = {
-        allFeatures = false,
-      },
-      imports = {
-        group = {
-          enable = false,
-        },
-      },
-      lsp = {
-        progress = {
-          enable = false,
-        },
-      },
-      completion = {
-        postfix = {
-          enable = true,
-        },
-        autoimport = {
-          enable = true,
-        },
-      },
-      experimental = {
-        enable = true,
-      },
-    },
-  },
-  on_attach = function(client, bufnr)
-    local buf_map = function(mode, lhs, rhs, opts)
-      opts = opts or { noremap = true, silent = true }
-      vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
-    end
-
-    buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")
-    buf_map("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")
-    buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>")
-    buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
-    buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>")
-
-    function _G.toggle_inlay_hints()
-      local bufnr = vim.api.nvim_get_current_buf()
-      local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr })
-      vim.lsp.inlay_hint.enable(not enabled, { bufnr = bufnr })
-    end
-
-    buf_map("n", "<leader>ih", "<cmd>lua toggle_inlay_hints()<CR>")
-
-    if client.supports_method("textDocument/inlayHint") then
-      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-    end
-
-    print("rust-ready")
-  end,
-})
-vim.lsp.enable('rust_analyzer')
-
--- C/C++ (clangd)
-vim.lsp.config('clangd', {
-    cmd = {
-        "clangd",
-        "--background-index",
-        "--clang-tidy",
-        "--completion-style=detailed",
-        "--header-insertion=never",
-        "-j=4",
-        "--offset-encoding=utf-16",
-    },
-    root_dir = function(fname)
-        return util.root_pattern("compile_commands.json", "compile_flags.txt", "CMakeLists.txt", ".git")(fname)
-               or util.find_git_ancestor(fname)
+      root_dir = function(fname)
+          return util.root_pattern("compile_commands.json", "compile_flags.txt", "CMakeLists.txt", ".git")(fname)
+                 or util.find_git_ancestor(fname)
+      end,
+      on_attach = on_attach,
+      capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "c", "cpp", "objc", "objcpp", "cuda" },
+    callback = function(args)
+      vim.lsp.enable('clangd', args.buf)
     end,
-    on_attach = on_attach,
-    capabilities = capabilities,
-})
-vim.lsp.enable('clangd')
+  })
+end
 
--- TypeScript/JavaScript (tsserver via typescript-language-server)
-vim.lsp.config('ts_ls', {
-    cmd = { "typescript-language-server", "--stdio" },
-    root_dir = util.root_pattern("package.json", "tsconfig.json", ".git"),
-    init_options = {
-        preferences = {
-            includeInlayParameterNameHints = "all",
-            includeInlayParameterNameHintsWhenArgumentMatchesName = true,
-            includeInlayFunctionParameterTypeHints = true,
-            includeInlayVariableTypeHints = true,
-            includeInlayPropertyDeclarationTypeHints = true,
-            includeInlayFunctionLikeReturnTypeHints = true,
-        },
-    },
-    on_attach = function(client, bufnr)
-        client.server_capabilities.documentFormattingProvider = false
-        on_attach(client, bufnr)
+-- TypeScript/JavaScript - only enable for TS/JS files
+if has_cmd('typescript-language-server') then
+  vim.lsp.config('ts_ls', {
+      cmd = { "typescript-language-server", "--stdio" },
+      root_dir = util.root_pattern("package.json", "tsconfig.json", ".git"),
+      init_options = {
+          preferences = {
+              includeInlayParameterNameHints = "all",
+              includeInlayParameterNameHintsWhenArgumentMatchesName = true,
+              includeInlayFunctionParameterTypeHints = true,
+              includeInlayVariableTypeHints = true,
+              includeInlayPropertyDeclarationTypeHints = true,
+              includeInlayFunctionLikeReturnTypeHints = true,
+          },
+      },
+      on_attach = function(client, bufnr)
+          client.server_capabilities.documentFormattingProvider = false
+          on_attach(client, bufnr)
+      end,
+      capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+    callback = function(args)
+      vim.lsp.enable('ts_ls', args.buf)
     end,
-    capabilities = capabilities,
-})
-vim.lsp.enable('ts_ls')
+  })
+end
 
--- ESLint (formatting + linting)
-vim.lsp.config('eslint', {
-    on_attach = function(client, bufnr)
-        vim.api.nvim_create_autocmd("BufWritePre", {
-            buffer = bufnr,
-            command = "EslintFixAll",
-        })
-        on_attach(client, bufnr)
+-- ESLint - only enable for JS/TS files
+if has_cmd('vscode-eslint-language-server') then
+  vim.lsp.config('eslint', {
+      on_attach = function(client, bufnr)
+          vim.api.nvim_create_autocmd("BufWritePre", {
+              buffer = bufnr,
+              command = "EslintFixAll",
+          })
+          on_attach(client, bufnr)
+      end,
+      capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue", "svelte" },
+    callback = function(args)
+      vim.lsp.enable('eslint', args.buf)
     end,
-    capabilities = capabilities,
-})
-vim.lsp.enable('eslint')
+  })
+end
 
--- Python (pyright)
-vim.lsp.config('pyright', {
-    on_attach = on_attach,
-    capabilities = capabilities,
-})
-vim.lsp.enable('pyright')
+-- Python (pyright) - only enable for Python files
+if has_cmd('pyright-langserver') then
+  vim.lsp.config('pyright', {
+      on_attach = on_attach,
+      capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "python",
+    callback = function(args)
+      vim.lsp.enable('pyright', args.buf)
+    end,
+  })
+end
 
--- Ruff (linting/formatting for Python)
-vim.lsp.config('ruff', {
-    on_attach = on_attach,
-    capabilities = capabilities,
-})
-vim.lsp.enable('ruff')
+-- Ruff (Python linting/formatting) - only enable for Python files
+if has_cmd('ruff') then
+  vim.lsp.config('ruff', {
+      on_attach = on_attach,
+      capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "python",
+    callback = function(args)
+      vim.lsp.enable('ruff', args.buf)
+    end,
+  })
+end
 
--- Lua (neovim runtime)
-vim.lsp.config('lua_ls', {
+-- Lua - only enable for Lua files
+if has_cmd('lua-language-server') then
+  vim.lsp.config('lua_ls', {
+      settings = {
+          Lua = {
+              runtime = { version = "LuaJIT" },
+              diagnostics = { globals = { "vim" } },
+              workspace = { library = vim.api.nvim_get_runtime_file("lua", true) },
+              telemetry = { enable = false },
+          },
+      },
+      on_attach = on_attach,
+      capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "lua",
+    callback = function(args)
+      vim.lsp.enable('lua_ls', args.buf)
+    end,
+  })
+end
+
+-- Bash - only enable for shell scripts
+if has_cmd('bash-language-server') then
+  vim.lsp.config('bashls', {
+      on_attach = on_attach,
+      capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "sh", "bash" },
+    callback = function(args)
+      vim.lsp.enable('bashls', args.buf)
+    end,
+  })
+end
+
+-- YAML - only enable for YAML files
+if has_cmd('yaml-language-server') then
+  vim.lsp.config('yamlls', {
+      settings = { yaml = { keyOrdering = false } },
+      on_attach = on_attach,
+      capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "yaml",
+    callback = function(args)
+      vim.lsp.enable('yamlls', args.buf)
+    end,
+  })
+end
+
+-- Go (gopls) - only enable for Go files
+if has_cmd('gopls') then
+  vim.lsp.config('gopls', {
+    cmd = { "gopls" },
+    root_dir = util.root_pattern("go.mod", ".git"),
     settings = {
-        Lua = {
-            runtime = { version = "LuaJIT" },
-            diagnostics = { globals = { "vim" } },
-            workspace = { library = vim.api.nvim_get_runtime_file("lua", true) },
-            telemetry = { enable = false },
+      gopls = {
+        completeUnimported = true,
+        usePlaceholders = true,
+        staticcheck = true,
+        gofumpt = true,
+        buildFlags = { "-tags=integration" },
+        env = { GOFLAGS = "-mod=readonly" },
+        directoryFilters = { "-**/vendor" },
+        analyses = {
+          unusedparams = true,
+          unreachable = true,
+          nilness = true,
         },
-    },
-    on_attach = on_attach,
-    capabilities = capabilities,
-})
-vim.lsp.enable('lua_ls')
-
--- Bash (shell scripts)
-vim.lsp.config('bashls', {
-    on_attach = on_attach,
-    capabilities = capabilities,
-})
-vim.lsp.enable('bashls')
-
--- YAML
-vim.lsp.config('yamlls', {
-    settings = { yaml = { keyOrdering = false } },
-    on_attach = on_attach,
-    capabilities = capabilities,
-})
-vim.lsp.enable('yamlls')
-
--- Go (gopls)
-vim.lsp.config('gopls', {
-  cmd = { "gopls" },
-  filetypes = { "go", "gomod" },
-  root_dir = util.root_pattern("go.mod", ".git"),
-  settings = {
-    gopls = {
-      completeUnimported = true,
-      usePlaceholders = true,
-      staticcheck = true,
-      gofumpt = true,
-      buildFlags = { "-tags=integration" },
-      env = { GOFLAGS = "-mod=readonly" },
-      directoryFilters = { "-**/vendor" },
-      analyses = {
-        unusedparams = true,
-        unreachable = true,
-        nilness = true,
-      },
-      codelenses = {
-        generate = true,
-        tidy = true,
+        codelenses = {
+          generate = true,
+          tidy = true,
+        },
       },
     },
-  },
-  on_attach = function(client, bufnr)
-    local buf_map = function(mode, lhs, rhs, opts)
-      opts = opts or { noremap = true, silent = true }
-      vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
-    end
-
-    buf_map("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")
-    buf_map("n", "K",  "<cmd>lua vim.lsp.buf.hover()<CR>")
-    buf_map("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>")
-    buf_map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
-    buf_map("n", "rf", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>")
-
-    print("go-ls ready")
-  end,
-})
-vim.lsp.enable('gopls')
+    on_attach = on_attach,
+    capabilities = capabilities,
+  })
+  
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "go", "gomod" },
+    callback = function(args)
+      vim.lsp.enable('gopls', args.buf)
+    end,
+  })
+end

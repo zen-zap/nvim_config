@@ -300,14 +300,16 @@ return {
 
     {
         "nvim-treesitter/nvim-treesitter",
-        opts = { ensure_installed = { "rust", "ron", "cpp", "java", "json5" } },
-        config = function(_, opts)
-            require("nvim-treesitter.configs").setup(opts)
-            -- Enable inlay hints for Rust
-            if vim.lsp.inlay_hint then
-                vim.lsp.inlay_hint.enable(true, { bufnr = 0 })
-            end
-        end,
+        build = ":TSUpdate",
+        opts = {
+            ensure_installed = { "rust", "ron", "cpp", "java", "json5", "bash", "regex", "lua", "vim", "vimdoc", "markdown", "markdown_inline" },
+            highlight = {
+                enable = true,
+            },
+            indent = {
+                enable = true,
+            },
+        },
         lazy = false,
         priority = 1000,
     },
