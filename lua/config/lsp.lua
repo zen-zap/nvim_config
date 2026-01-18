@@ -34,11 +34,19 @@ end
 local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 capabilities.offsetEncoding = { "utf-16" }
 
--- Java (jdtls) - only enable if executable exists
+-- Java (jdtls) - enable for project and single files
 if has_cmd('jdtls') then
-    vim.lsp.config('jdtls', {
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "java",
+    callback = function(ev)
+      local bufname = vim.api.nvim_buf_get_name(ev.buf)
+      -- Try to find project root, fallback to CWD for single files
+      local root_dir = util.root_pattern(".git", "pom.xml", "build.gradle", "settings.gradle")(bufname) or vim.fn.getcwd()
+      
+      vim.lsp.start({
+        name = 'jdtls',
         cmd = { "jdtls" },
-        root_dir = util.root_pattern(".git", "pom.xml", "build.gradle", "settings.gradle"),
+        root_dir = root_dir,
         on_attach = on_attach,
         capabilities = capabilities,
         settings = {
@@ -65,10 +73,11 @@ if has_cmd('jdtls') then
             ['language/status'] = function() end,
             ['$/progress'] = function() end,
         },
-    })
-    vim.lsp.enable('jdtls')
+      })
+      vim.notify("jdtls attached", vim.log.levels.INFO)
+    end,
+  })
 end
--- Note: jdtls silently skipped if not installed
 
 -- Rust (rust-analyzer) - only enable for Rust files
 if has_cmd('rust-analyzer') then
