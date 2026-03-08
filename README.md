@@ -4,10 +4,10 @@
 <a href="https://dotfyle.com/zen-zap/nvimconfig"><img src="https://img.shields.io/badge/LEADERKEY-space-22c55e?style=for-the-badge&labelColor=1e40af&logo=neovim&logoColor=green" /></a>
 <a href="https://dotfyle.com/zen-zap/nvimconfig"><img src="https://dotfyle.com/zen-zap/nvimconfig/badges/plugin-manager?style=for-the-badge" /></a>
 
-
 ## Install Instructions
 
- > Install requires Neovim 0.9+. Always review the code before installing a configuration.
+> Install requires Neovim 0.9+. Always review the code before installing a configuration.
+> Prefer Neovim 0.11x.
 
 Clone the repository and install the plugins:
 
@@ -23,73 +23,115 @@ NVIM_APPNAME=zen-zap/nvim_config/ nvim
 
 ## Plugins
 
-### colorscheme
+This configuration uses the `folke/lazy.nvim` plugin manager. Plugins are organized by purpose and set up in `lua/plugins/init.lua`; most are lazy‑loaded automatically.
 
-+ [olivercederborg/poimandres.nvim](https://dotfyle.com/plugins/olivercederborg/poimandres.nvim)
-+ [rose-pine/neovim](https://dotfyle.com/plugins/rose-pine/neovim)
-+ [AlexvZyl/nordic.nvim](https://dotfyle.com/plugins/AlexvZyl/nordic.nvim)
-+ [sainnhe/everforest](https://dotfyle.com/plugins/sainnhe/everforest)
-+ [sainnhe/sonokai](https://dotfyle.com/plugins/sainnhe/sonokai)
-+ [rebelot/kanagawa.nvim](https://dotfyle.com/plugins/rebelot/kanagawa.nvim)
-### completion
+### Colorschemes
 
-+ [hrsh7th/nvim-cmp](https://dotfyle.com/plugins/hrsh7th/nvim-cmp)
-### cursorline
+- `neopywal/neopywal.nvim` (applies a palette based on your wallpaper) [not setup as of now]
+- `AlexvZyl/nordic.nvim`, `rebelot/kanagawa.nvim`, `olivercederborg/poimandres.nvim`, `rose-pine/neovim`, `sainnhe/sonokai`, `sainnhe/everforest`, `folke/tokyonight.nvim`
+- Additional themes are included for quick cycling (`catppuccin`, `bamboo.nvim`, `oldworld.nvim`, `miasma.nvim`, `embark`, `gruber-darker`, `mellifluous`, `monochrome`, `evergarden`, etc.)
+- Use `<leader>cs` to cycle schemes or `<leader>ct` to pick with Telescope (see **Keybindings** below).
 
-+ [RRethy/vim-illuminate](https://dotfyle.com/plugins/RRethy/vim-illuminate)
-### editing-support
+### Completion & Snippets
 
-+ [windwp/nvim-autopairs](https://dotfyle.com/plugins/windwp/nvim-autopairs)
-### file-explorer
+- `hrsh7th/nvim-cmp` with sources for LSP, buffers, paths and `vsnip` snippets.
 
-+ [nvim-tree/nvim-tree.lua](https://dotfyle.com/plugins/nvim-tree/nvim-tree.lua)
-### fuzzy-finder
+### LSP & Language tooling
 
-+ [nvim-telescope/telescope.nvim](https://dotfyle.com/plugins/nvim-telescope/telescope.nvim)
-### git
+- `neovim/nvim-lspconfig` with helper plugins like `j-hui/fidget.nvim` (progress UI) and built‑in support for ESLint, Ruff, and others.
 
-+ [lewis6991/gitsigns.nvim](https://dotfyle.com/plugins/lewis6991/gitsigns.nvim)
-### icon
+### Treesitter & Syntax
 
-+ [nvim-tree/nvim-web-devicons](https://dotfyle.com/plugins/nvim-tree/nvim-web-devicons)
-### indent
+- `nvim-treesitter/nvim-treesitter` (configured to install Rust, RON, C/C++, Java, JSON5, Bash, Lua, Vimscript, Markdown, etc.).
 
-+ [lukas-reineke/indent-blankline.nvim](https://dotfyle.com/plugins/lukas-reineke/indent-blankline.nvim)
-### keybinding
+### UI Enhancements
 
-+ [folke/which-key.nvim](https://dotfyle.com/plugins/folke/which-key.nvim)
-### lsp
+- `akinsho/bufferline.nvim` (buffer tabs)
+- `nvim-lualine/lualine.nvim` (statusline, theme-aware)
+- `folke/noice.nvim` (improved command line and LSP documentation)
+- `karb94/neoscroll.nvim` (smooth scrolling)
+- `RRethy/vim-illuminate` (highlight word under cursor)
+- `windwp/nvim-autopairs` (auto‑closing brackets/quotes)
+- `folke/which-key.nvim` (leader‑key cheat sheet)
+- `nvim-telescope/telescope.nvim` & `nvim-lua/plenary.nvim` (fuzzy finder)
 
-+ [neovim/nvim-lspconfig](https://dotfyle.com/plugins/neovim/nvim-lspconfig)
-### motion
+### File Explorer & Icons
 
-+ [ggandor/leap.nvim](https://dotfyle.com/plugins/ggandor/leap.nvim)
-### nvim-dev
+- `nvim-tree/nvim-tree.lua` (file tree with git highlighting)
+- `nvim-tree/nvim-web-devicons` (file icons)
 
-+ [nvim-lua/plenary.nvim](https://dotfyle.com/plugins/nvim-lua/plenary.nvim)
-+ [MunifTanjim/nui.nvim](https://dotfyle.com/plugins/MunifTanjim/nui.nvim)
-### plugin-manager
+### Indent & Motion
 
-+ [folke/lazy.nvim](https://dotfyle.com/plugins/folke/lazy.nvim)
-### preconfigured
+- `lukas-reineke/indent-blankline.nvim` (indent guides)
+- `ggandor/leap.nvim` (motion)
+- `andymass/vim-matchup` (improved `%` matching)
 
-+ [LazyVim/LazyVim](https://dotfyle.com/plugins/LazyVim/LazyVim)
-### scrolling
+### Git
 
-+ [karb94/neoscroll.nvim](https://dotfyle.com/plugins/karb94/neoscroll.nvim)
-### statusline
+- `lewis6991/gitsigns.nvim` (git decorations & hunk actions)
 
-+ [nvim-lualine/lualine.nvim](https://dotfyle.com/plugins/nvim-lualine/lualine.nvim)
-### syntax
+### Development Helpers
 
-+ [nvim-treesitter/nvim-treesitter](https://dotfyle.com/plugins/nvim-treesitter/nvim-treesitter)
-### utility
+- `nvim-neotest/nvim-nio` (test runner integration)
+- `j-hui/fidget.nvim` (LSP progress)
+- `nvim-lua/plenary.nvim`, `MunifTanjim/nui.nvim` (utilities used by other plugins)
 
-+ [folke/noice.nvim](https://dotfyle.com/plugins/folke/noice.nvim)
-### yaml
+Many of the color/theme plugins and extras are loaded lazily; you can inspect or add your own by editing `lua/plugins/init.lua`.
 
-+ [cuducos/yaml.nvim](https://dotfyle.com/plugins/cuducos/yaml.nvim)
+## Keybindings
+
+Leader key is set to `<Space>` throughout the configuration (see `lua/config/keymaps.lua`).
+
+- **File navigation:** `<leader>f` find files, `<leader>g` live grep, `<leader>b` open buffers, `<leader>?` help tags.
+- **LSP:** `<leader>s` search workspace symbols, `<leader>rn` rename, `gd` go to definition, `K` hover, `[d`/`]d` navigate diagnostics.
+- **Colorschemes:** `<leader>cs` cycle, `<leader>ct` choose with Telescope.
+- **Window management:** `<leader>-`/`|` to split, `<leader>h/j/k/l` move between splits, `<leader>wd` close, `<leader>w` toggle auto‑wrap.
+- **Buffers:** `<leader>l`/`h` cycle next/prev buffer (bufferline integration).
+- **File tree:** `<leader>t` toggle NvimTree.
+- **Debugging (DAP):** `<F5>` continue, `<F10>` step over, `<F11>` step into, `<F12>` step out, `<leader>db` toggle breakpoint, `<leader>dr` open REPL, `<leader>du` toggle UI.
+- **Terminal:** `<C-S-c>` kills current terminal job.
+- **Utils:** `<C-s>` save, `<leader>q` quit, `<leader>Q` quit all!, `<leader><space>` clear search, `<leader>e` select inner word, `<leader>m` change till underscore.
+
+> See the full list of mappings and helper comments in `lua/config/keymaps.lua`.
+
 ## Language Servers
 
-+ jdtls
-+ rust-analyzer
+Servers are started automatically if their executables are found on the system. The configuration includes sensible defaults, per‑language behaviors (inlay hints, format‑on‑save, etc.) and root detection logic.
+
+Supported/recognized servers:
+
+- `rust-analyzer` – Rust
+- `jdtls` – Java
+- `clangd` – C/C++/Objective‑C/ CUDA
+- `typescript-language-server` – JavaScript/TypeScript and React
+- `vscode-eslint-language-server` – ESLint integration for JS/TS/Vue/Svelte
+- `pyright-langserver` – Python
+- `ruff` – Python linting/formatting
+- `lua-language-server` – Lua (configured for Neovim runtime)
+- `bash-language-server` – shell scripts
+- `yaml-language-server` – YAML files
+- `gopls` – Go (with workspace module awareness)
+
+> You can extend or override these settings by editing `lua/config/lsp.lua`.
+
+## Installation Notes
+
+- Requires **Neovim 0.9+** (0.11+ recommended for the new LSP API).
+- Clone the repo:
+
+```sh
+git clone git@github.com:zen-zap/nvim_config ~/.config/zen-zap/nvim_config
+```
+
+- Launch with custom appname so config directory is used:
+
+```sh
+NVIM_APPNAME=zen-zap/nvim_config/ nvim
+```
+
+- External language servers (rust-analyzer, jdtls, clangd, etc.) must be installed and on your `$PATH` for LSP support to activate.
+- This config is built on top of **LazyVim**; additional options are in `lua/config/options.lua` and can be tweaked as needed.
+
+---
+
+*Hope you have a good time with this. Configuration should work out of the box with minimal tweaks.*

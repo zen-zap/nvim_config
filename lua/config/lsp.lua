@@ -21,7 +21,7 @@ local function on_attach(client, bufnr)
     buf_map('n', ']d', vim.diagnostic.goto_next, "Next Diagnostic")
 
     -- Inlay hints toggle if supported
-    if client.supports_method("textDocument/inlayHint") then
+    if client:supports_method("textDocument/inlayHint") then
         vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
         buf_map('n', '<leader>ih', function()
             local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr })
@@ -33,6 +33,16 @@ end
 -- Capabilities (e.g., for cmp-nvim-lsp)
 local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 capabilities.offsetEncoding = { "utf-16" }
+-- Enable file watching so rust-analyzer (and others) get notified when
+-- Cargo.toml / Cargo.lock change after `cargo add` or manual edits.
+-- Without this, :LspInfo shows "file watching disabled" and new crates
+-- are invisible until you manually :LspRestart.
+capabilities.workspace = vim.tbl_deep_extend("force", capabilities.workspace or {}, {
+  didChangeWatchedFiles = {
+    dynamicRegistration = true,
+    relativePatternSupport = true,
+  },
+})
 
 -- Java (jdtls) - enable for project and single files
 if has_cmd('jdtls') then
@@ -81,44 +91,81 @@ end
 
 -- Rust (rust-analyzer) - only enable for Rust files
 if has_cmd('rust-analyzer') then
-  -- Auto-start for Rust files
+  -- Root detection for multi-crate workspaces:
+  --   Cargo.lock only exists at the workspace root (member crates don't have
+  --   their own), so it correctly anchors rust-analyzer to the workspace rather
+  --   than an individual crate dir (which is what root_pattern("Cargo.toml")
+  --   would do).  Falls back to rust-project.json (non-Cargo setups), then the
+  --   nearest Cargo.toml for library crates that omit Cargo.lock from VCS.
+  --
+  -- Per-project overrides: drop a rust-analyzer.toml (or .rust-analyzer.toml)
+  -- at your workspace root.  Keys mirror the ["rust-analyzer"] table below but
+  -- in TOML syntax, e.g.:
+  --   [cargo]
+  --   features = ["my_feature"]
+  --   [check]
+  --   command = "check"
+  -- See: https://rust-analyzer.github.io/manual.html#configuration
+  local function find_rust_root(fname)
+    return util.root_pattern("rust-project.json")(fname)
+        or util.root_pattern("Cargo.lock")(fname)
+        or util.root_pattern("Cargo.toml")(fname)
+  end
+
   vim.api.nvim_create_autocmd("FileType", {
     pattern = "rust",
     callback = function(ev)
       local bufname = vim.api.nvim_buf_get_name(ev.buf)
-      local root_dir = util.root_pattern("Cargo.toml", "rust-project.json")(bufname)
-      
+      local root_dir = find_rust_root(bufname)
+
       if not root_dir then
         return
       end
-      
+
+      local ra_cmd = vim.fn.expand("~/.cargo/bin/rust-analyzer")
+      if vim.fn.executable(ra_cmd) ~= 1 then
+        ra_cmd = "rust-analyzer" -- fallback to PATH
+      end
+
       vim.lsp.start({
         name = 'rust_analyzer',
-        cmd = { "rust-analyzer" },
+        cmd = { ra_cmd },
         root_dir = root_dir,
         capabilities = capabilities,
         settings = {
           ["rust-analyzer"] = {
-            -- Note: Per-project rust-analyzer.toml will override these
             checkOnSave = {
-              enable = false,
+              enable = true,
+            },          
+            check = {
+              command = "clippy",
             },
             cargo = {
-              allFeatures = false,
-              -- Will be overridden by rust-analyzer.toml if present
+              features = "all",
+              buildScripts = { enable = true },
             },
             procMacro = {
-              enable = true,  -- Override in rust-analyzer.toml for blog_os
+              enable = true,
             },
             rustfmt = {
-              overrideCommand = { "rustfmt", "--edition", "2024" },
+              rangeFormatting = { enable = true },
             },
             inlayHints = {
               enable = true,
-              typeHints = true,
-              chainingHints = true,
-              parameterHints = true,
+              typeHints = { enable = true },
+              chainingHints = { enable = true },
+              parameterHints = { enable = true },
               maxLength = 30,
+              -- Show return type hints for closures that have a block body.
+              -- "with_block" is less noisy than "always" (skips one-liner closures).
+              closureReturnTypeHints = { enable = "with_block" },
+              -- Show elided lifetime hints, but skip the trivial/obvious ones.
+              -- useParameterNames = true uses the param name instead of 'a/'b etc.
+              lifetimeElisionHints = { enable = "skip_trivial", useParameterNames = true },
+              -- Show the discriminant value (= 0, = 1 …) for fieldless enum variants.
+              discriminantHints = { enable = "fieldless" },
+              -- Show a hint after the closing `}` of a long block (>= 20 lines).
+              closingBraceHints = { enable = true, minLines = 20 },
             },
             lens = {
               enable = true,
@@ -132,20 +179,62 @@ if has_cmd('rust-analyzer') then
                 trait = { enable = true },
               },
             },
+            diagnostics = {
+              enable = true,
+              -- Extra style lints (naming conventions, redundant patterns, etc.)
+              -- These run in addition to clippy and catch style issues clippy misses.
+              styleLints = { enable = true },
+              -- "unlinked-file" fires when a .rs file isn't reachable via a
+              -- module tree. Fixing root_dir (above) is the real cure; this
+              -- silences residual noise in edge cases (e.g. build.rs, scratch
+              -- files outside a crate).
+              -- disabled = { "unlinked-file" }, -- enable it per project if needed
+            },
+            completion = {
+              -- Show full function/method signatures in completion documentation
+              -- popups, not just the parameter list. Much more informative.
+              fullFunctionSignatures = { enable = true },
+            },
+            workspace = {
+              symbol = {
+                search = {
+                  -- Also find symbols in dependencies, not just the workspace.
+                  scope = "workspace_and_dependencies",
+                  -- Return all symbol kinds (functions, consts, etc.), not only types.
+                  kind = "all_symbols",
+                },
+              },
+            },
           },
         },
         on_attach = function(client, bufnr)
           on_attach(client, bufnr)
-          
-          -- Rust-specific format keymap
+
           vim.keymap.set('n', 'rf', vim.lsp.buf.format, { buffer = bufnr, desc = "Format Rust" })
 
-          -- Enable inlay hints
-          if client.supports_method("textDocument/inlayHint") then
+          if client:supports_method("textDocument/inlayHint") then
             vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
           end
-          
+
           vim.notify("rust-analyzer ready", vim.log.levels.INFO)
+
+          -- Format on save (rustfmt / cargo fmt parity).
+          -- Scoped to this buffer rather than pattern="*.rs" so it only fires
+          -- for buffers that actually have rust-analyzer attached.
+          vim.api.nvim_create_autocmd("BufWritePre", {
+            buffer = bufnr,
+            callback = function()
+              vim.lsp.buf.format({ async = false, bufnr = bufnr })
+            end,
+          })
+
+          -- Format on leaving insert mode
+          vim.api.nvim_create_autocmd("InsertLeave", {
+            buffer = bufnr,
+            callback = function()
+              vim.lsp.buf.format({ async = true, bufnr = bufnr })
+            end,
+          })
         end,
       })
     end,
@@ -344,13 +433,26 @@ if has_cmd('gopls') then
     pattern = { "go", "gomod" },
     callback = function(ev)
       local bufname = vim.api.nvim_buf_get_name(ev.buf)
-      local root_dir = util.root_pattern("go.mod", ".git")(bufname) or vim.fn.getcwd()
+      -- Prioritize go.mod for root detection; .git may be in a parent monorepo
+      local root_dir = util.root_pattern("go.mod")(bufname)
+                       or util.root_pattern(".git")(bufname)
+      
+      -- Only start gopls if we found a valid workspace root
+      if not root_dir then
+        return
+      end
       
       vim.lsp.start({
         name = 'gopls',
         cmd = { "gopls" },
         root_dir = root_dir,
         capabilities = capabilities,
+        workspace_folders = {
+          {
+            uri = vim.uri_from_fname(root_dir),
+            name = vim.fn.fnamemodify(root_dir, ":t"),
+          },
+        },
         settings = {
           gopls = {
             completeUnimported = true,

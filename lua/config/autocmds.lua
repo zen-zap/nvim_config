@@ -62,3 +62,12 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
 
 -- Create a custom user command :F to toggle the file explorer
 vim.api.nvim_create_user_command("F", "NvimTreeToggle", { desc = "Toggle File Explorer" })
+
+-- Reload colorscheme when the pywal file changes
+vim.api.nvim_create_autocmd("Signal", {
+    pattern = "SIGUSR1", -- Pywal can send this signal
+    callback = function()
+        -- Re-source the pywal file or reload the plugin
+        vim.cmd("colorscheme neopywal") -- Change to 'wal' if using Option 2
+    end,
+})
