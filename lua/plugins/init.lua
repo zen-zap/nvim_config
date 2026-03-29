@@ -53,7 +53,7 @@ return {
 
     -- Leap (quick navigation)
     {
-        "ggandor/leap.nvim",
+        url = "https://codeberg.org/andyg/leap.nvim",
         config = function()
             -- Use the recommended plug mappings (modern API)
             vim.keymap.set({'n', 'x', 'o'}, 's',  '<Plug>(leap-forward)')
@@ -67,8 +67,12 @@ return {
         "andymass/vim-matchup",
         config = function()
             vim.g.matchup_matchparen_offscreen = { method = "popup" }
+            vim.g.matchup_matchparen_treesitter = 0 -- Disable Treesitter integration to avoid 0.12 crash, rely on regex matching instead
         end,
     },
+
+    -- Notify (notification system)
+    { "rcarriga/nvim-notify" },
 
     -- Git signs
     {
@@ -147,14 +151,34 @@ return {
     -- Devicons
     { "nvim-tree/nvim-web-devicons", opts = {}, lazy = false, priority = 1000 },
 
+    -- Mini icons (alternative icon provider used by which-key health checks)
+    {
+        "echasnovski/mini.nvim",
+        version = false,
+        config = function()
+            require("mini.icons").setup()
+        end,
+    },
+
     -- Telescope (fuzzy finder)
     { "nvim-telescope/telescope.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
 
-    -- Noice (UI enhancements)
+    -- Noice & Notify (UI enhancements)
     {
         "folke/noice.nvim",
-        dependencies = { "MunifTanjim/nui.nvim" },
+        dependencies = { 
+            "MunifTanjim/nui.nvim", 
+            "rcarriga/nvim-notify"
+        },
         config = function()
+            
+            require("notify").setup({
+                background_colour = "#000000", -- Fixes the background math error
+                timeout = 2000,                -- Disappears fast (2 seconds)
+                stages = "static",             -- No distracting sliding animations
+                render = "compact",            -- Bare minimum text, no massive borders
+            })
+
             require("noice").setup({
                 lsp = {
                     override = {
@@ -167,6 +191,16 @@ return {
                     command_palette = true,
                     long_message_to_split = true,
                     lsp_doc_border = true,
+                },
+                
+                -- This intercepts standard notifications and forces them into a 
+                -- tiny, unobtrusive line of text at the bottom right of your screen.
+                -- This also completely bypasses the Neovim 0.12 Treesitter crash!
+                routes = {
+                    {
+                        filter = { event = "notify" },
+                        view = "mini",
+                    },
                 },
             })
         end,
@@ -228,11 +262,13 @@ return {
     -- Treesitter
     {
         "nvim-treesitter/nvim-treesitter",
+        branch = "main",
         build = ":TSUpdate",
         opts = {
             ensure_installed = { "rust", "ron", "cpp", "java", "json5", "bash", "regex", "lua", "vim", "vimdoc", "markdown", "markdown_inline" },
             highlight = { enable = true },
             indent = { enable = true },
+            matchup = { enable = false }, -- breaking change in 0.12, disable until it's fixed
         },
         lazy = false,
         priority = 1000,
@@ -336,39 +372,48 @@ return {
         },
         config = function()
             local dap = require("dap")
+            local mason_codelldb = vim.fn.expand("~/.local/share/nvim/mason/bin/codelldb")
+            local codelldb_cmd = nil
+            if vim.fn.executable(mason_codelldb) == 1 then
+                codelldb_cmd = mason_codelldb
+            elseif vim.fn.executable("codelldb") == 1 then
+                codelldb_cmd = "codelldb"
+            end
 
             -- C / C++ with codelldb
-            if not dap.adapters["codelldb"] then
+            if codelldb_cmd and not dap.adapters["codelldb"] then
                 dap.adapters["codelldb"] = {
                     type = "server",
                     host = "localhost",
                     port = "${port}",
                     executable = {
-                        command = "codelldb",
+                        command = codelldb_cmd,
                         args = { "--port", "${port}" },
                     },
                 }
             end
 
-            for _, lang in ipairs({ "c", "cpp" }) do
-                dap.configurations[lang] = {
-                    {
-                        type = "codelldb",
-                        request = "launch",
-                        name = "Launch file",
-                        program = function()
-                            return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
-                        end,
-                        cwd = "${workspaceFolder}",
-                    },
-                    {
-                        type = "codelldb",
-                        request = "attach",
-                        name = "Attach to process",
-                        pid = require("dap.utils").pick_process,
-                        cwd = "${workspaceFolder}",
-                    },
-                }
+            if codelldb_cmd then
+                for _, lang in ipairs({ "c", "cpp" }) do
+                    dap.configurations[lang] = {
+                        {
+                            type = "codelldb",
+                            request = "launch",
+                            name = "Launch file",
+                            program = function()
+                                return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
+                            end,
+                            cwd = "${workspaceFolder}",
+                        },
+                        {
+                            type = "codelldb",
+                            request = "attach",
+                            name = "Attach to process",
+                            pid = require("dap.utils").pick_process,
+                            cwd = "${workspaceFolder}",
+                        },
+                    }
+                end
             end
 
             -- Java remote debug

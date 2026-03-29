@@ -6,8 +6,7 @@
 
 ## Install Instructions
 
-> Install requires Neovim 0.9+. Always review the code before installing a configuration.
-> Prefer Neovim 0.11x.
+> Install requires Neovim 0.12+. Always review the code before installing a configuration.
 
 Clone the repository and install the plugins:
 
@@ -27,14 +26,14 @@ This configuration uses the `folke/lazy.nvim` plugin manager. Plugins are organi
 
 ### Colorschemes
 
-- `neopywal/neopywal.nvim` (applies a palette based on your wallpaper) [not setup as of now]
 - `AlexvZyl/nordic.nvim`, `rebelot/kanagawa.nvim`, `olivercederborg/poimandres.nvim`, `rose-pine/neovim`, `sainnhe/sonokai`, `sainnhe/everforest`, `folke/tokyonight.nvim`
 - Additional themes are included for quick cycling (`catppuccin`, `bamboo.nvim`, `oldworld.nvim`, `miasma.nvim`, `embark`, `gruber-darker`, `mellifluous`, `monochrome`, `evergarden`, etc.)
 - Use `<leader>cs` to cycle schemes or `<leader>ct` to pick with Telescope (see **Keybindings** below).
 
 ### Completion & Snippets
 
-- `hrsh7th/nvim-cmp` with sources for LSP, buffers, paths and `vsnip` snippets.
+- `hrsh7th/nvim-cmp` with sources for LSP, buffers, and paths.
+- Uses native Neovim snippets (no `vsnip`).
 
 ### LSP & Language tooling
 
@@ -59,11 +58,12 @@ This configuration uses the `folke/lazy.nvim` plugin manager. Plugins are organi
 
 - `nvim-tree/nvim-tree.lua` (file tree with git highlighting)
 - `nvim-tree/nvim-web-devicons` (file icons)
+- `echasnovski/mini.nvim` (`mini.icons` for icon-provider compatibility)
 
 ### Indent & Motion
 
 - `lukas-reineke/indent-blankline.nvim` (indent guides)
-- `ggandor/leap.nvim` (motion)
+- `leap.nvim` from Codeberg (`https://codeberg.org/andyg/leap.nvim`)
 - `andymass/vim-matchup` (improved `%` matching)
 
 ### Git
@@ -85,9 +85,9 @@ Leader key is set to `<Space>` throughout the configuration (see `lua/config/key
 - **File navigation:** `<leader>f` find files, `<leader>g` live grep, `<leader>b` open buffers, `<leader>?` help tags.
 - **LSP:** `<leader>s` search workspace symbols, `<leader>rn` rename, `gd` go to definition, `K` hover, `[d`/`]d` navigate diagnostics.
 - **Colorschemes:** `<leader>cs` cycle, `<leader>ct` choose with Telescope.
-- **Window management:** `<leader>-`/`|` to split, `<leader>h/j/k/l` move between splits, `<leader>wd` close, `<leader>w` toggle auto‑wrap.
-- **Buffers:** `<leader>l`/`h` cycle next/prev buffer (bufferline integration).
-- **File tree:** `<leader>t` toggle NvimTree.
+- **Window management:** `<leader>-`/`|` to split, `<leader>h/j/k/l` move between splits, `<leader>wd` close, `<leader>tw` toggle auto‑wrap.
+- **Buffers:** `L`/`H` cycle next/prev buffer (bufferline integration).
+- **File tree:** `<leader>tt` toggle NvimTree.
 - **Debugging (DAP):** `<F5>` continue, `<F10>` step over, `<F11>` step into, `<F12>` step out, `<leader>db` toggle breakpoint, `<leader>dr` open REPL, `<leader>du` toggle UI.
 - **Terminal:** `<C-S-c>` kills current terminal job.
 - **Utils:** `<C-s>` save, `<leader>q` quit, `<leader>Q` quit all!, `<leader><space>` clear search, `<leader>e` select inner word, `<leader>m` change till underscore.
@@ -116,7 +116,7 @@ Supported/recognized servers:
 
 ## Installation Notes
 
-- Requires **Neovim 0.9+** (0.11+ recommended for the new LSP API).
+- Requires **Neovim 0.12+**.
 - Clone the repo:
 
 ```sh
@@ -130,6 +130,8 @@ NVIM_APPNAME=zen-zap/nvim_config/ nvim
 ```
 
 - External language servers (rust-analyzer, jdtls, clangd, etc.) must be installed and on your `$PATH` for LSP support to activate.
+- For Treesitter health checks and parser tooling, install `tree-sitter-cli` (`npm i -g tree-sitter-cli`).
+- For C/C++ debugging with DAP, install `codelldb` (e.g. via `:MasonInstall codelldb`).
 - This config is built on top of **LazyVim**; additional options are in `lua/config/options.lua` and can be tweaked as needed.
 
 ---

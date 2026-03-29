@@ -3,6 +3,9 @@
 
 local util = require("lspconfig.util")
 
+-- Load Telescope; on_attach will fall back to native LSP mappings if unavailable.
+local has_telescope, telescope = pcall(require, "telescope.builtin")
+
 -- Helper to check if command exists
 local function has_cmd(cmd)
     return vim.fn.executable(cmd) == 1
@@ -14,18 +17,28 @@ local function on_attach(client, bufnr)
         vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
     end
 
-    -- LSP keymaps (Buffer-local overrides ensure they only apply to LSP buffers)
-    buf_map('n', 'gd', vim.lsp.buf.definition, "Go to Definition")
-    buf_map('n', 'gD', vim.lsp.buf.declaration, "Go to Declaration")
-    buf_map('n', 'gi', vim.lsp.buf.implementation, "Go to Implementation")     
-    buf_map('n', 'gr', require("telescope.builtin").lsp_references, "Go to References") 
+    if has_telescope then
+        buf_map('n', 'gd', telescope.lsp_definitions, "Go to Definition")
+        buf_map('n', 'gD', vim.lsp.buf.declaration, "Go to Declaration") -- Native (Telescope doesn't have this)
+        buf_map('n', 'gi', telescope.lsp_implementations, "Go to Implementation")      
+        buf_map('n', 'gR', telescope.lsp_references, "Go to References") 
+        buf_map('n', 'gy', telescope.lsp_type_definitions, "Go to Type Definition")
+        buf_map('n', '<leader>s', telescope.lsp_dynamic_workspace_symbols, "Search Workspace Symbols")
+    else
+        buf_map('n', 'gd', vim.lsp.buf.definition, "Go to Definition")
+        buf_map('n', 'gD', vim.lsp.buf.declaration, "Go to Declaration")
+        buf_map('n', 'gi', vim.lsp.buf.implementation, "Go to Implementation")     
+        buf_map('n', 'gR', vim.lsp.buf.references, "Go to References") 
+        buf_map('n', 'gy', vim.lsp.buf.type_definition, "Go to Type Definition")
+        buf_map('n', '<leader>s', vim.lsp.buf.workspace_symbol, "Search Workspace Symbols")
+    end
+
+    -- Core LSP actions (These don't use Telescope)
     buf_map('n', 'gl', vim.diagnostic.open_float, "Show Diagnostics")     
     buf_map('n', 'K', vim.lsp.buf.hover, "Hover Documentation")
     buf_map('n', '<leader>rn', vim.lsp.buf.rename, "Rename Symbol")
     buf_map('n', '<leader>ca', vim.lsp.buf.code_action, "Code Action")
-    buf_map('n', '<leader>s', require("telescope.builtin").lsp_dynamic_workspace_symbols, "Search Workspace Symbols")
     
-    -- Neovim 0.12 Native Diagnostic Jumps
     buf_map('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, "Previous Diagnostic")
     buf_map('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, "Next Diagnostic")
 

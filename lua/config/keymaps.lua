@@ -63,7 +63,7 @@ vim.keymap.set("n", "<leader>j", "<C-w>j", { desc = "Move to Below Split" })
 vim.keymap.set("n", "<leader>k", "<C-w>k", { desc = "Move to Above Split" })
 vim.keymap.set("n", "<leader>l", "<C-w>l", { desc = "Move to Right Split" })
 
-vim.keymap.set("n", "<leader>w", function()
+vim.keymap.set("n", "<leader>tw", function()
   if vim.opt.textwidth:get() == 0 then
     vim.opt.textwidth = 80
     vim.opt.formatoptions:append({ "c", "t" })
@@ -105,7 +105,7 @@ vim.keymap.set("n", "<leader>ct", function()
 end, { desc = "Choose Colorscheme (Telescope)" })
 
 -- File tree toggle
-vim.keymap.set("n", "<leader>t", ":NvimTreeToggle<CR>", { desc = "Toggle File Tree" })
+vim.keymap.set("n", "<leader>tt", ":NvimTreeToggle<CR>", { desc = "Toggle File Tree" })
 
 -- DAP (Debugging) keymaps
 vim.keymap.set("n", "<F5>", function() require("dap").continue() end, { desc = "DAP Continue" })
@@ -138,3 +138,11 @@ vim.keymap.set("n", "<leader><space>", ":nohlsearch<CR>", { desc = "Clear Search
 -- Buffer Navigation
 vim.keymap.set('n', 'L', ':BufferLineCycleNext<CR>', { desc = 'Go to Next Buffer' })
 vim.keymap.set('n', 'H', ':BufferLineCyclePrev<CR>', { desc = 'Go to Previous Buffer' })
+
+-- Remove normal-mode `gc` to avoid overlap with `gcc` in which-key health.
+vim.api.nvim_create_autocmd("User", {
+  pattern = "VeryLazy",
+  callback = function()
+    pcall(vim.keymap.del, "n", "gc")
+  end,
+})
