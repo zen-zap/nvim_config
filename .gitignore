@@ -8,10 +8,6 @@ foo.*
 data
 stylua.toml
 .vscode/
-lazy-lock.json
-.neoconf.json
 nvchad_extensions/
 *.sqlite
 *.sqlite3
-lazynvim.json
-stylua.toml

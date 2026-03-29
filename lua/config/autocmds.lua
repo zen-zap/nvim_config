@@ -1,44 +1,47 @@
--- This file contains all the autocommands for Neovim
 -- lua/config/autocmds.lua
+-- This file contains all the autocommands for Neovim
 
 -- Helper function to create augroups
 local function augroup(name)
   return vim.api.nvim_create_augroup("lazyvim_" .. name, { clear = true })
 end
 
--- highlight yanked text
-vim.api.nvim_create_autocmd(
-	'TextYankPost',
-	{
-		pattern = '*',
-		command = 'silent! lua vim.highlight.on_yank({ timeout = 500 })'
-	}
-)
+-- Highlight yanked text
+vim.api.nvim_create_autocmd('TextYankPost', {
+    group = augroup("highlight_yank"),
+    callback = function()
+        vim.highlight.on_yank({ timeout = 250 })
+    end,
+})
 
--- jump to last edit position on opening file
-vim.api.nvim_create_autocmd(
-	'BufReadPost',
-	{
-		pattern = '*',
-		callback = function(ev)
-			if vim.fn.line("'\"") > 1 and vim.fn.line("'\"") <= vim.fn.line("$") then
-				-- except for in git commit messages
-				-- https://stackoverflow.com/questions/31449496/vim-ignore-specifc-file-in-autocommand
-				if not vim.fn.expand('%:p'):find('.git', 1, true) then
-					vim.cmd('exe "normal! g\'\\""')
-				end
-			end
-		end
-	}
-)
+-- Jump to last edit position on opening file
+vim.api.nvim_create_autocmd('BufReadPost', {
+    group = augroup("last_loc"),
+    callback = function(ev)
+        local exclude = { "gitcommit", "commit", "gitrebase" }
+        local buf = ev.buf
+        if vim.tbl_contains(exclude, vim.bo[buf].filetype) or vim.b[buf].lazyvim_last_loc then
+            return
+        end
+        vim.b[buf].lazyvim_last_loc = true
+        local mark = vim.api.nvim_buf_get_mark(buf, '"')
+        local lcount = vim.api.nvim_buf_line_count(buf)
+        if mark[1] > 0 and mark[1] <= lcount then
+            pcall(vim.api.nvim_win_set_cursor, 0, mark)
+        end
+    end,
+})
 
--- prevent accidental writes to buffers that shouldn't be edited
-vim.api.nvim_create_autocmd('BufRead', { pattern = '*.orig', command = 'set readonly' })
-vim.api.nvim_create_autocmd('BufRead', { pattern = '*.pacnew', command = 'set readonly' })
--- leave paste mode when leaving insert mode (if it was on)
-vim.api.nvim_create_autocmd('InsertLeave', { pattern = '*', command = 'set nopaste' })
+-- Prevent accidental writes to buffers that shouldn't be edited
+vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
+    group = augroup("readonly_files"),
+    pattern = { '*.orig', '*.pacnew' },
+    callback = function()
+        vim.bo.readonly = true
+    end,
+})
 
--- resize splits if window got resized
+-- Resize splits if window got resized
 vim.api.nvim_create_autocmd({ "VimResized" }, {
   group = augroup("resize_splits"),
   callback = function()
@@ -59,15 +62,3 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
       vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
     end,
 })
-
--- Create a custom user command :F to toggle the file explorer
-vim.api.nvim_create_user_command("F", "NvimTreeToggle", { desc = "Toggle File Explorer" })
-
--- -- Reload colorscheme when the pywal file changes
--- vim.api.nvim_create_autocmd("Signal", {
---     pattern = "SIGUSR1", -- Pywal can send this signal
---     callback = function()
---         -- Re-source the pywal file or reload the plugin
---         vim.cmd("colorscheme neopywal") -- Change to 'wal' if using Option 2
---     end,
--- })

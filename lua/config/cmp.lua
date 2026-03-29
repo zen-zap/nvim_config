@@ -1,9 +1,13 @@
+-- lua/config/cmp.lua
+-- Configuration for nvim-cmp (Autocompletion and Snippets)
+
 local cmp = require('cmp')
 
 cmp.setup({
   snippet = {
     expand = function(args)
-      vim.fn["vsnip#anonymous"](args.body) -- Required for gopls placeholders
+      -- Use Neovim's native snippet expansion (requires Neovim 0.10+)
+      vim.snippet.expand(args.body)
     end,
   },
   completion = {
@@ -46,6 +50,7 @@ cmp.setup({
         fallback()
       end
     end, { "i", "s" }),
+    
     -- Tab / Shift-Tab to navigate suggestions
     ['<Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
@@ -64,7 +69,6 @@ cmp.setup({
   },
   sources = cmp.config.sources({
     { name = 'nvim_lsp', priority = 1000 }, -- LSP completions (highest priority)
-    { name = 'vsnip', priority = 500 },    -- Snippet completions
   }, {
     { name = 'buffer', priority = 100, keyword_length = 3 }, -- Buffer completions (lower priority, min 3 chars)
     { name = 'path', priority = 200 },     -- Path completions
@@ -75,7 +79,6 @@ cmp.setup({
 cmp.setup.filetype('go', {
   sources = cmp.config.sources({
     { name = 'nvim_lsp', priority = 1000 }, -- Only use LSP for Go (no buffer completions)
-    { name = 'vsnip', priority = 500 },
   }, {
     { name = 'path', priority = 200 },
   }),
@@ -112,4 +115,3 @@ cmp.setup.filetype('go', {
     end, { 'i', 's' }),
   },
 })
- 

@@ -1,9 +1,11 @@
+-- lua/plugins/init.lua
 return {
 
     -- nvim-lspconfig
     {
         "neovim/nvim-lspconfig",
     },
+
     -- Bufferline (tab line)
     {
         'akinsho/bufferline.nvim', 
@@ -23,68 +25,22 @@ return {
         end
     },
 
-    -- {
-    --     "RedsXDD/neopywal.nvim",
-    --     name = "neopywal",
-    --     lazy = false,
-    --     priority = 1000,
-    --     config = function()
-    --         local neopywal = require("neopywal")
-    --         neopywal.setup()
-    --         vim.cmd.colorscheme("neopywal")
-    --     end,
-    -- },
-
     -- nvim-cmp (LSP-based code completion)
     {
         "hrsh7th/nvim-cmp",
         -- load cmp on InsertEnter
         event = "InsertEnter",
         -- these dependencies will only be loaded when cmp loads
-        -- dependencies are always lazy-loaded unless specified otherwise
         dependencies = {
             'neovim/nvim-lspconfig',
             "hrsh7th/cmp-nvim-lsp",
             "hrsh7th/cmp-buffer",
             "hrsh7th/cmp-path",
-            "hrsh7th/cmp-vsnip", -- Add cmp-vsnip for snippet completion
-            "hrsh7th/vim-vsnip", -- Snippet engine
+            -- vsnip dependencies removed for native Neovim 0.12 snippets!
         },
         config = function()
-            local cmp = require'cmp'
-            cmp.setup({
-                snippet = {
-                    -- REQUIRED by nvim-cmp. get rid of it once we can
-                    expand = function(args)
-                        vim.fn["vsnip#anonymous"](args.body)
-                    end,
-                },
-                mapping = cmp.mapping.preset.insert({
-                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-                    ['<C-Space>'] = cmp.mapping.complete(),
-                    ['<C-e>'] = cmp.mapping.abort(),
-                    -- Accept currently selected item.
-                    -- Set `select` to `false` to only confirm explicitly selected items.
-                    ['<CR>'] = cmp.mapping.confirm({ select = true }),
-                }),
-                sources = cmp.config.sources({
-                    { name = 'nvim_lsp' },
-                    { name = "vsnip" }, -- Enable vsnip as a source
-                }, {
-                    { name = 'path' },
-                }),
-                experimental = {
-                    ghost_text = true,
-                },
-            })
-
-            -- Enable completing paths in :
-            cmp.setup.cmdline(':', {
-                sources = cmp.config.sources({
-                    { name = 'path' }
-                })
-            })
+            -- Delegate the setup to your external config file
+            require("config.cmp")
         end
     },
 
@@ -94,7 +50,6 @@ return {
         main = "ibl",
         opts = {},
     },
-
 
     -- Leap (quick navigation)
     {
@@ -172,18 +127,7 @@ return {
         'nvim-tree/nvim-tree.lua',
         dependencies = 'nvim-tree/nvim-web-devicons',
         config = function()
-        require("nvim-tree").setup({
-            -- THIS IS THE KEY: Set the file tree to the left
-            view = {
-            side = "left",
-            },
-            -- Add git highlighting
-            git = {
-            enable = true,
-            },
-            -- Disable netrw (the default file explorer)
-            disable_netrw = true,
-        })
+            require("config.nvimtree")
         end
     },
 
@@ -192,11 +136,11 @@ return {
         'nvim-lualine/lualine.nvim',
         dependencies = { 'nvim-tree/nvim-web-devicons' },
         config = function()
-        require('lualine').setup({
-            options = {
-            theme = 'auto', -- Will match your colorscheme
-            }
-        })
+            require('lualine').setup({
+                options = {
+                    theme = 'auto', -- Will match your colorscheme
+                }
+            })
         end
     },
 
@@ -244,7 +188,6 @@ return {
         priority = 1000,
         config = function()
             require("poimandres").setup({})
-            -- vim.cmd.colorscheme("poimandres")
         end,
     },
 
@@ -255,78 +198,45 @@ return {
         priority = 1000,
         config = function()
             require('nordic').setup({
-                -- This callback can be used to override the colors used in the base palette.
                 on_palette = function(palette) end,
-                -- This callback can be used to override the colors used in the extended palette.
                 after_palette = function(palette) end,
-                -- This callback can be used to override highlights before they are applied.
                 on_highlight = function(highlights, palette) end,
-                -- Enable bold keywords.
                 bold_keywords = false,
-                -- Enable italic comments.
                 italic_comments = true,
-                -- Enable editor background transparency.
                 transparent = {
-                    -- Enable transparent background.
                     bg = true,
-                    -- Enable transparent background for floating windows.
                     float = true,
                 },
-                -- Enable brighter float border.
                 bright_border = false,
-                -- Reduce the overall amount of blue in the theme (diverges from base Nord).
                 reduced_blue = true,
-                -- Swap the dark background with the normal one.
                 swap_backgrounds = false,
-                -- Cursorline options.  Also includes visual/selection.
                 cursorline = {
-                    -- Bold font in cursorline.
                     bold = false,
-                    -- Bold cursorline number.
                     bold_number = true,
-                    -- Available styles: 'dark', 'light'.
                     theme = 'dark',
-                    -- Blending the cursorline bg with the buffer bg.
                     blend = 0.80,
                 },
-                noice = {
-                    -- Available styles: `classic`, `flat`.
-                    style = 'classic',
-                },
-                telescope = {
-                    -- Available styles: `classic`, `flat`.
-                    style = 'flat',
-                },
-                leap = {
-                    -- Dims the backdrop when using leap.
-                    dim_backdrop = true,
-                },
-                ts_context = {
-                    -- Enables dark background for treesitter-context window
-                    dark_background = true,
-                }
+                noice = { style = 'classic' },
+                telescope = { style = 'flat' },
+                leap = { dim_backdrop = true },
+                ts_context = { dark_background = true }
             })
             vim.cmd.colorscheme('nordic')
         end
     },
 
+    -- Treesitter
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
         opts = {
             ensure_installed = { "rust", "ron", "cpp", "java", "json5", "bash", "regex", "lua", "vim", "vimdoc", "markdown", "markdown_inline" },
-            highlight = {
-                enable = true,
-            },
-            indent = {
-                enable = true,
-            },
+            highlight = { enable = true },
+            indent = { enable = true },
         },
         lazy = false,
         priority = 1000,
     },
-
-    {'akinsho/bufferline.nvim', version = "*", dependencies = 'nvim-tree/nvim-web-devicons'},
 
     -- Sonokai colorscheme
     {
@@ -335,7 +245,6 @@ return {
         priority = 1000,
         config = function()
             vim.g.sonokai_enable_italic = true
-            -- vim.cmd.colorscheme("sonokai")
         end,
     },
 
@@ -346,7 +255,6 @@ return {
         priority = 1000,
         config = function()
             vim.g.everforest_enable_italic = true
-            -- vim.cmd.colorscheme("everforest")
         end,
     },
 
@@ -358,34 +266,17 @@ return {
         priority = 1000,
         config = function()
             require("rose-pine").setup({
-                dark_variant = "main", -- Choose between "main", "moon", or "dawn"
+                dark_variant = "main",
             })
-            -- vim.cmd.colorscheme("rose-pine")
         end,
     },
 
     -- Tokyo Night colorscheme
-    {
-        "folke/tokyonight.nvim",
-        lazy = false,
-        priority = 1000,
-        config = function()
-            -- vim.cmd.colorscheme("tokyonight")
-        end,
-    },
-
-
+    { "folke/tokyonight.nvim", lazy = false, priority = 1000 },
     { "blazkowolf/gruber-darker.nvim" },
-
-    { "ramojus/mellifluous.nvim"},
-
-    {"kdheepak/monochrome.nvim"},
-
-    {
-        'everviolet/nvim', name = 'evergarden',
-        priority = 1000,
-    },
-
+    { "ramojus/mellifluous.nvim" },
+    { "kdheepak/monochrome.nvim" },
+    { 'everviolet/nvim', name = 'evergarden', priority = 1000 },
     { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
 
     {
@@ -393,18 +284,12 @@ return {
         lazy = false,
         priority = 1000,
         config = function()
-            require('bamboo').setup {
-                -- optional configuration here
-            }
+            require('bamboo').setup {}
             require('bamboo').load()
         end,
     },
 
-    {
-        "dgox16/oldworld.nvim",
-        lazy = false,
-        priority = 1000,
-    },
+    { "dgox16/oldworld.nvim", lazy = false, priority = 1000 },
 
     {
         "xero/miasma.nvim",
@@ -415,89 +300,35 @@ return {
         end,
     },
 
-    {
-        'embark-theme/vim',
-        lazy = false,
-        priority = 1000,
-        name = 'embark'
-    },
-
+    { 'embark-theme/vim', lazy = false, priority = 1000, name = 'embark' },
     { 'datsfilipe/vesper.nvim' },
-
-    {
-        "ficcdaf/ashen.nvim",
-    },
-
-    {
-        "kuri-sun/yoda.nvim",
-    },
+    { "ficcdaf/ashen.nvim" },
+    { "kuri-sun/yoda.nvim" },
 
     -- Fidget (LSP progress)
     {
         "j-hui/fidget.nvim",
-        tag = "legacy", -- Use the stable version
+        tag = "legacy", 
         config = function()
             require("fidget").setup({
-                text = {
-                    spinner = "dots", -- Use a smaller spinner
-                },
-                window = {
-                    blend = 0, -- No transparency
-                    border = "none", -- Remove border
-                },
-                fmt = {
-                    max_width = 20, -- Limit the width of the progress bar
-                },
+                text = { spinner = "dots" },
+                window = { blend = 0, border = "none" },
+                fmt = { max_width = 20 },
                 sources = {
-                    ["rust-analyzer"] = {
-                        ignore = true, -- Completely hide rust-analyzer progress
-                    },
-                    ["jdtls"] = {
-                        ignore = true, -- Completely hide progress notifications from jdtls
-                    },
+                    ["rust-analyzer"] = { ignore = true },
+                    ["jdtls"] = { ignore = true },
                 },
             })
         end,
     },
 
-    -- Lualine (statusline)
-    {
-        "nvim-lualine/lualine.nvim",
-        dependencies = { "nvim-tree/nvim-web-devicons" },
-        lazy = false,
-        priority = 1000,
-        config = function()
-            require("lualine").setup({
-                options = {
-                    theme = "nordic",
-                    section_separators = { left = "", right = "" },
-                    component_separators = { left = "", right = "" },
-                },
-                sections = {
-                    lualine_a = { "mode" },
-                    lualine_b = { "branch", "diff", "diagnostics" },
-                    lualine_c = { "filename" },
-                    lualine_x = { "encoding", "fileformat", "filetype" },
-                    lualine_y = { "progress" },
-                    lualine_z = { "location" },
-                },
-                inactive_sections = {
-                    lualine_a = {},
-                    lualine_b = {},
-                    lualine_c = { "filename" },
-                    lualine_x = { "location" },
-                    lualine_y = {},
-                    lualine_z = {},
-                },
-            })
-        end,
-    },
-
+    -- nvim-nio (dependency for DAP)
     {
         "nvim-neotest/nvim-nio",
         lazy = true,
     },
 
+    -- nvim-dap (Debugger)
     {
         "mfussenegger/nvim-dap",
         dependencies = {
@@ -553,7 +384,7 @@ return {
         end,
     },
 
-
+    -- nvim-dap-ui (Debugger UI)
     {
         "rcarriga/nvim-dap-ui",
         dependencies = { "mfussenegger/nvim-dap" },
@@ -575,6 +406,7 @@ return {
         end,
     },
 
+    -- Mason (LSP/Formatter installer)
     {
         "williamboman/mason.nvim",
         cmd = "Mason",

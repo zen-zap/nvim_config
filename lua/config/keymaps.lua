@@ -1,21 +1,13 @@
--- keymaps.lua
+-- lua/config/keymaps.lua
 -- Custom key mappings
+-- LSP specific keymaps are defined in lua/config/lsp.lua to ensure they only apply to LSP buffers
 
 vim.g.mapleader = " " -- Set leader key to space
 
--- lua/config/keymaps.lua
 local opts = { noremap = true, silent = true }
-
--- Map K to show hover documentation (if using LSP)
-vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "LSP Hover" })
-
--- Jump to start and end of line using the home row keys
-vim.keymap.set('', 'H', '^')
-vim.keymap.set('', 'L', '$')
 
 vim.keymap.set("n", "<Home>", "^", { noremap = true, silent = true })
 vim.keymap.set("i", "<Home>", "<C-o>^", { noremap = true, silent = true })
-
 
 -- In terminal mode, map Ctrl+Shift+C to kill the current terminal job
 -- First, define a helper function to kill the terminal job:
@@ -41,9 +33,7 @@ vim.api.nvim_set_keymap('n', '<C-S-Up>', '<C-v>k', { noremap = true, silent = tr
 -- Map Ctrl+Shift+Down to start Visual Block mode and select downwards
 vim.api.nvim_set_keymap('n', '<C-S-Down>', '<C-v>j', { noremap = true, silent = true })
 -- type viw to select the current word
-vim.api.nvim_set_keymap('n', '<Leader>e', 'viw', { noremap = true, silent = true })
-
-
+vim.keymap.set('n', '<Leader>e', 'viw', { noremap = true, silent = true, desc = "Select Inner Word" })
 
 -- FOR SETTING UP TELESCOPE KEYBINDINGS
 local builtin = require("telescope.builtin")
@@ -56,26 +46,18 @@ vim.keymap.set("n", "<leader>b", builtin.buffers, { noremap = true, silent = tru
 -- Map leader + h to search help tags
 vim.keymap.set("n", "<leader>?", builtin.help_tags, { noremap = true, silent = true, desc = "Help Tags" })
 
-
-
--- Map leader + s to search LSP symbols (useful for functions, classes, etc.)
-vim.keymap.set("n", "<leader>s", builtin.lsp_dynamic_workspace_symbols, { noremap = true, silent = true, desc = "Search LSP Symbols" })
-
-vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, { desc = "LSP Rename" })
-
-
-
 -- handy keymap for replacing up to next _ (like in variable names)
-vim.keymap.set('n', '<leader>m', 'ct_')
+vim.keymap.set('n', '<leader>m', 'ct_', { desc = "Change till underscore" })
 -- F1 is pretty close to Esc, so you probably meant Esc
 vim.keymap.set('', '<F1>', '<Esc>')
 vim.keymap.set('i', '<F1>', '<Esc>')
 
--- Key mappings for window management
+-- Key mappings for window management (Splits)
 vim.keymap.set("n", "<leader>-", "<C-W>s", { desc = "Split Window Below", remap = true })
 vim.keymap.set("n", "<leader>|", "<C-W>v", { desc = "Split Window Right", remap = true })
 vim.keymap.set("n", "<leader>wd", "<C-W>c", { desc = "Delete Window", remap = true })
 
+-- Split Navigation
 vim.keymap.set("n", "<leader>h", "<C-w>h", { desc = "Move to Left Split" })
 vim.keymap.set("n", "<leader>j", "<C-w>j", { desc = "Move to Below Split" })
 vim.keymap.set("n", "<leader>k", "<C-w>k", { desc = "Move to Above Split" })
@@ -95,7 +77,7 @@ end, { desc = "Toggle auto-wrap" })
 
 -- Enhanced Colorscheme switcher with preview
 local colorschemes = {
-  "vivid_nightfall", -- Custom Vivid Nightfall theme
+  "ashen",
   "poimandres",
   "kanagawa-dragon", 
   "nordic",
@@ -106,8 +88,6 @@ local colorschemes = {
 }
 
 local current_colorscheme = 1 
--- Start with "vivid_nightfall" -- there is previous select memory, so it will start with the last used colorscheme
-
 -- Cycle through colorschemes
 vim.keymap.set("n", "<leader>cs", function()
   current_colorscheme = current_colorscheme % #colorschemes + 1
@@ -123,8 +103,6 @@ vim.keymap.set("n", "<leader>ct", function()
     prompt_title = "Select Colorscheme",
   })
 end, { desc = "Choose Colorscheme (Telescope)" })
-
--- Add these at the end of your keymaps file
 
 -- File tree toggle
 vim.keymap.set("n", "<leader>t", ":NvimTreeToggle<CR>", { desc = "Toggle File Tree" })
@@ -157,19 +135,6 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move Selection Up" })
 -- Clear search highlighting
 vim.keymap.set("n", "<leader><space>", ":nohlsearch<CR>", { desc = "Clear Search Highlight" })
 
--- -- For resizing splits with Alt + arrow keys -- did in tmux config
--- -- Uncomment these lines if you want to use Alt + arrow keys for resizing splits
--- vim.keymap.set("n", "<A-Up>",    ":resize +2<CR>")
--- vim.keymap.set("n", "<A-Down>",  ":resize -2<CR>")
--- vim.keymap.set("n", "<A-Left>",  ":vertical resize -2<CR>")
--- vim.keymap.set("n", "<A-Right>", ":vertical resize +2<CR>")
-
--- Go to the next buffer
-vim.keymap.set('n', '<leader>l', ':BufferLineCycleNext<CR>', {
-  desc = 'Go to Next Buffer'
-})
-
--- Go to the previous buffer
-vim.keymap.set('n', '<leader>h', ':BufferLineCyclePrev<CR>', {
-  desc = 'Go to Previous Buffer'
-})
+-- Buffer Navigation
+vim.keymap.set('n', 'L', ':BufferLineCycleNext<CR>', { desc = 'Go to Next Buffer' })
+vim.keymap.set('n', 'H', ':BufferLineCyclePrev<CR>', { desc = 'Go to Previous Buffer' })

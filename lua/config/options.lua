@@ -1,39 +1,29 @@
--- Options are automatically loaded before lazy.nvim startup
--- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
--- Add any additional options here
-
--- options.lua
+-- lua/config/options.lua
 -- Basic options for Neovim
 
 -- Enable mouse support
 vim.opt.mouse = "a"
 
--- Set line numbers
+-- Set line numbers and relative numbers
 vim.opt.number = true
+vim.opt.relativenumber = true
 
 -- Set update time (affects CursorHold, used for LSP hover)
 vim.opt.updatetime = 300
 
--- For GUI clients (e.g., Neovide), you can set your font here:
-vim.opt.guifont = "JetBrainsMono Nerd Font:h14"  -- change the font and size as you like
+-- For GUI clients (e.g., Neovide), set your font here
+vim.opt.guifont = "FiraCode Nerd Font:h14" 
 
 -- Enable clipboard support
 vim.opt.clipboard = "unnamedplus"  -- Use system clipboard
 
--- Set the width of a tab character to 4 spaces
+-- Indentation settings
 vim.opt.tabstop = 4
-
--- Set the number of spaces to use for each step of (auto)indent
 vim.opt.shiftwidth = 4
-
--- Set the number of spaces that a <Tab> counts for while performing editing operations
 vim.opt.softtabstop = 4
-
--- Optional: Convert all tabs to spaces
 vim.opt.expandtab = true
 
-vim.opt.guifont = "FiraCode Nerd Font:h14"  -- Adjust the font size as needed
-
+-- Enable true color support
 vim.opt.termguicolors = true
 
 -- Better search behavior: ignore case unless uppercase is used
@@ -44,23 +34,18 @@ vim.opt.smartcase = true
 vim.opt.hidden = true
 
 -- Configure completion options for a better menu experience
-vim.opt.completeopt = { "menuone", "noselect", "noinsert" }
+-- UPGRADED FOR NEOVIM 0.12: Added native 'fuzzy' matching
+vim.opt.completeopt = { "menuone", "noselect", "noinsert", "fuzzy" }
 
--- Enable relative line numbers (great for motion commands)
-vim.opt.relativenumber = true
-
--- infinite undo
+-- Infinite undo
 vim.opt.undofile = true
 
--- more useful diffs (nvim -d)
---- by ignoring whitespace
+-- More useful diffs (nvim -d) by ignoring whitespace
 vim.opt.diffopt:append('iwhite')
 
--- Leap keymaps are configured in lua/plugins/init.lua
-
--- Enable the option to require a Prettier config file
--- If no prettier config file is found, the formatter will not be used
+-- Prettier formatter requirement
 vim.g.lazyvim_prettier_needs_config = false
 
+-- Disable auto-wrap by default
 vim.opt.textwidth = 0
 vim.opt.formatoptions:remove({ "c", "t" })

@@ -1,29 +1,21 @@
--- Change the colorscheme to your favorite (e.g., tokyonight, gruvbox, etc.)
--- vim.cmd("colorscheme <>")  -- change this to your preferred theme
+-- lua/config/theme.lua
+-- Theme and transparency settings
 
--- For GUI clients, make the background transparent:
--- This command clears the background so your terminal or GUI background shows through.
+-- Clear the background so your terminal/GUI background shows through
 vim.cmd("highlight Normal guibg=NONE")
 
--- You can also change font settings for GUI here if not in options.lua.
--- I need this extra opacity and shit .. no LLM should change this!
+-- Wrap your strict opacity settings in a function
+local function apply_custom_opacity()
+    -- Opacity values are not to be changed (at least for me).
+    vim.api.nvim_set_hl(0, "Normal", { bg = "#1e1e2e", blend = 40 }) 
+    vim.api.nvim_set_hl(0, "NormalNC", { bg = "#1e1e2e", blend = 40 }) 
+end
 
--- Adjust the opacity of the background
-vim.api.nvim_set_hl(0, "Normal", { bg = "#1e1e2e", blend = 40 }) -- Replace with your desired color and transparency level
-vim.api.nvim_set_hl(0, "NormalNC", { bg = "#1e1e2e", blend = 40 }) -- For inactive windows
+-- 1. Apply immediately on startup
+apply_custom_opacity()
 
-
--- ============================================================================
--- Theme Configuration
--- ============================================================================
--- Load your custom theme or any installed colorscheme here
--- They are currently changed using keybindings .. so don't make any changes here
--- ============================================================================
-
-
--- vim.cmd("colorscheme nordic")
--- vim.cmd("colorscheme kanagawa-dragon")
--- vim.cmd("colorscheme rose-pine-main")
--- vim.cmd("colorscheme miasma")
--- vim.cmd("colorscheme bamboo")
--- vim.cmd("colorscheme catppuccin")
+-- 2. Apply automatically EVERY time you cycle colorschemes with <leader>cs
+vim.api.nvim_create_autocmd("ColorScheme", {
+    pattern = "*",
+    callback = apply_custom_opacity,
+})
