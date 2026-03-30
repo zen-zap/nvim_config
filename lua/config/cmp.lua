@@ -11,7 +11,11 @@ cmp.setup({
     end,
   },
   completion = {
-    autocomplete = { require("cmp.types").cmp.TriggerEvent.InsertEnter }, -- less aggressive
+    -- Trigger completion both when entering insert mode and as text changes.
+    autocomplete = {
+      require("cmp.types").cmp.TriggerEvent.InsertEnter,
+      require("cmp.types").cmp.TriggerEvent.TextChanged,
+    },
     completeopt = 'menu,menuone,noinsert,noselect',
     get_trigger_characters = function(trigger_characters)
       return vim.tbl_filter(function(char)
@@ -21,6 +25,9 @@ cmp.setup({
   },
   preselect = cmp.PreselectMode.None,
   mapping = {
+    -- Manually open completion menu.
+    ['<C-Space>'] = cmp.mapping.complete(),
+
     -- Confirm suggestion only when one is explicitly selected.
     ['<CR>'] = cmp.mapping(function(fallback)
       if cmp.visible() and cmp.get_selected_entry() then
