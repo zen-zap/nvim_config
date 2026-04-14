@@ -4,11 +4,20 @@
 vim.cmd("highlight Normal guibg=NONE")
 
 local function apply_custom_opacity()
-    -- vim.api.nvim_set_hl(0, "Normal", { bg = "#1e1e2e", blend = 40 }) 
-    -- vim.api.nvim_set_hl(0, "NormalNC", { bg = "#1e1e2e", blend = 40 }) 
-    -- Use "NONE" so it inherits terminal transparency without clashing with the active theme
-    vim.api.nvim_set_hl(0, "Normal", { bg = "NONE", blend = 40 }) 
-    vim.api.nvim_set_hl(0, "NormalNC", { bg = "NONE", blend = 40 }) 
+    local function transparent_group(name)
+        local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = false })
+        if not ok then
+            return
+        end
+
+        hl.bg = nil
+        hl.ctermbg = nil
+        hl.blend = 40
+        vim.api.nvim_set_hl(0, name, hl)
+    end
+
+    transparent_group("Normal")
+    transparent_group("NormalNC")
 end
 
 apply_custom_opacity()
